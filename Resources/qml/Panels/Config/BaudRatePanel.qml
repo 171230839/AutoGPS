@@ -5,7 +5,7 @@ Panel
 {
     signal contentUpdated()
 
-    property string selectedContent: serialPortThread.qBaudRate
+    property string selectedContent: serialPortThread.qBaudRate()
     function updateSelectedContent(updatedText)
     {
         console.log("updateSelectedContent: " + updatedText );

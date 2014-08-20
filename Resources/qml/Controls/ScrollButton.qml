@@ -39,7 +39,7 @@ Item
 
     id: scrollButton
     width: 100
-    height: 50
+    height: 40
     state: "one"
     onScrollListChanged: { state = "one"; currentIndex = 0 }
     currentIndex: 0

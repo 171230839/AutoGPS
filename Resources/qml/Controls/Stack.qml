@@ -49,8 +49,4 @@ Item
     return StackObj.stackArray
   }
 
-  Component.onCompleted:
-  {
-    console.log("Stack onCompleted")
-  }
 }

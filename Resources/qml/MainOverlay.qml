@@ -77,6 +77,23 @@ LayoutItem
         width: parent.width
         lblClassification: "AutoGPS - Map View"
         classificationColor: Qt.rgba(0, 1, 0, 1)
+        ScrollButton
+        {
+            id: btnBasemaps
+            scrollButtonDefaultIcon: "../../icons/Basemap-Normal.png"
+            anchors.right: parent.right
+            anchors.rightMargin: 5
+            anchors.verticalCenter:  parent.verticalCenter
+            //        visible: menu.state != "open"
+            Component.onCompleted:
+            {
+                itemChanged.connect(window.basemapChanged);
+            }
+            onItemChanged:
+            {
+                window.currentItem = name;
+            }
+        }
     }
 
     ToggleButton
@@ -145,24 +162,7 @@ LayoutItem
 
 
     // Layer toggling, add back in if desired:
-    ScrollButton
-    {
-        id: btnBasemaps
-        scrollButtonDefaultIcon: "../../icons/Basemap-Normal.png"
-        anchors.top: classificationBar.bottom
-        anchors.topMargin: 10
-        anchors.right: parent.right
-        anchors.rightMargin: 5
-        //        visible: menu.state != "open"
-        Component.onCompleted:
-        {
-            itemChanged.connect(window.basemapChanged);
-        }
-        onItemChanged:
-        {
-            window.currentItem = name;
-        }
-    }
+
 
     StatusBar
     {
@@ -202,50 +202,17 @@ LayoutItem
         fillMode: Image.PreserveAspectFit
         visible: window.currentItem === "Map"
     }
+     Camera
+     {
+         id: camera
+         anchors.top: classificationBar.bottom
+         anchors.horizontalCenter: parent.horizontalCenter
+         windowWidth: window.width / 2
+         windowHeight: window.height /4
+         visible: window.currentItem === "Camera"
+         width: window.width
+         height:  window.height / 4
+     }
 
-    ToggleButton
-    {
-        id: cMenu
-        buttonDefaultIcon: "../../icons/Menu-Normal.png"
-        buttonActiveIcon: "../../icons/Menu-Pressed.png"
-        anchors.bottom: parent.bottom
-       anchors.horizontalCenter: parent.horizontalCenter
-        anchors.margins: 3
-        visible: window.currentItem === "Camera"
-        Component.onCompleted:
-        {
-            itemClicked.connect(cmenu.invoke)
-        }
-        z: 2
 
-        Menu
-        {
-            id: cmenu
-            windowHeight: window.height / 4
-            windowWidth: window.width
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: window.bottom
-            z: 2
-            onMenuClosed:
-            {
-                while (cstack.count() > 1)
-                {
-                    cstack.removePanel()
-                }
-            }
-
-            Stack
-            {
-                id: cstack
-            }
-
-            MainMenu
-            {
-                id: cmainMenu
-                stack: cstack
-                anchors.fill: parent
-                onCloseMenu: cMenu.setToggled(false)
-            }
-        }
-    }
 }

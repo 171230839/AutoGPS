@@ -45,15 +45,12 @@ AutoGPS::AutoGPS (QWidget *parent):
     //    map.addLayer(tiledLayer);
 
     mapController = new MapController(&map, mapGraphicsView, this);
-    mapController->init();
+//     camera = new Camera(mapGraphicsView, this);
 
     engine = new QDeclarativeEngine(this);
     context = new QDeclarativeContext(engine->rootContext());
     context->setContextProperty("serialPortThread", &thread);
-    //      connect(&thread, SIGNAL(portListChanged), this, SLOT(onPortListChanged));
-    //      qDebug()<<"portList()"<<QVariant::fromValue(thread.portList());
-    //      context->setContextProperty("serialPortNo", QVariant::fromValue(thread.portList()));
-    context->setContextProperty("camera", &camera);
+//    context->setContextProperty("cameraObject", camera);
 
 
     QDeclarativeComponent component(engine, QUrl(UI_OVERLAY_PATH), engine);
@@ -140,7 +137,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     //    connect(&thread, SIGNAL(response(QString)), mapController, SLOT(onResponse(QString)));
     //    connect(&thread, SIGNAL(timeout(QString)), mapController, SLOT(onTimeout(QString)));
     //    connect(&thread, SIGNAL(error(QString)), mapController, SLOT(onError(QString)));
-    thread.start();
+
 
     connect(&map, SIGNAL(mapReady()), mapController, SLOT(onMapReady()));
 
@@ -152,6 +149,11 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(&map, SIGNAL(mousePress(QMouseEvent)), mapController, SLOT(mousePress(QMouseEvent)));
 
 
+//    QWidget * widget = new QWidget();
+//    widget->setLayoutDirection(leftToRight);
+
+
+     thread.start();
 }
 
 AutoGPS::~AutoGPS()
@@ -204,6 +206,20 @@ void AutoGPS::setBasemapFirst()
         Layer layer = map.layer("tiledLayer");
         layer.setVisible(true);
     }
+    if (mapController)
+    {
+        if (mapController->getSimpleGraphic())
+        {
+            mapController->getSimpleGraphic()->setVisible(true);
+        }
+    }
+    if (camera)
+    {
+        if (camera->getWidget())
+        {
+            camera->getWidget()->setVisible(false);
+        }
+    }
 }
 
 void AutoGPS::setBasemapSecond()
@@ -222,6 +238,13 @@ void AutoGPS::setBasemapSecond()
         }
     }
 
+    if (camera)
+    {
+        if (camera->getWidget())
+        {
+            camera->getWidget()->setVisible(true);
+        }
+    }
 
 }
 

@@ -51,24 +51,24 @@
 class MasterThread : public QThread
 {
     Q_OBJECT
-    Q_PROPERTY(QStringList portList READ portList NOTIFY portListChanged)
-    Q_PROPERTY(QString qPortName READ qPortName)
-    Q_PROPERTY(QString qBaudRate READ qBaudRate)
-    Q_PROPERTY(QString qDataBits READ qDataBits)
-    Q_PROPERTY(QString qStopBits READ qStopBits)
-    Q_PROPERTY(QString qParity READ qParity)
-    Q_PROPERTY(QString qTimeout READ qTimeout)
+    //    Q_PROPERTY(QStringList portList READ portList NOTIFY portListChanged)
+    //    Q_PROPERTY(QString qPortName READ qPortName NOTIFY qPortNameChanged)
+    //    Q_PROPERTY(QString qBaudRate READ qBaudRate NOTIFY qBaudRateChanged)
+    //    Q_PROPERTY(QString qDataBits READ qDataBits NOTIFY qDataBitsChanged)
+    //    Q_PROPERTY(QString qStopBits READ qStopBits NOTIFY qStopBitsChanged)
+    //    Q_PROPERTY(QString qParity READ qParity NOTIFY qParityChanged)
+    //    Q_PROPERTY(QString qTimeout READ qTimeout NOTIFY qTimeoutChanged)
 public:
     MasterThread(QObject *parent = 0);
     ~MasterThread();
     void run();
 
-    QStringList portList();
-    QString qPortName() { return portName;}
-    QString qBaudRate() { return QString::number(baudRate);}
-    QString qDataBits() { return QString::number(dataBits);}
-    QString qStopBits() { return QString::number(stopBits);}
-    QString qParity() {
+    Q_INVOKABLE QStringList portList();
+    Q_INVOKABLE QString qPortName() { return portName;}
+    Q_INVOKABLE QString qBaudRate() { return QString::number(baudRate);}
+    Q_INVOKABLE  QString qDataBits() { return QString::number(dataBits);}
+    Q_INVOKABLE QString qStopBits() { return QString::number(stopBits);}
+    Q_INVOKABLE QString qParity() {
         if (parity == 0)
             return "NONE";
         else if (parity == 2)
@@ -77,20 +77,24 @@ public:
             return "ENEV";
         return "";
     }
-    QString qTimeout() { return QString::number(waitTimeout);}
+    Q_INVOKABLE QString qTimeout() { return QString::number(waitTimeout);}
     void storeSerialConfig();
     void init();
 signals:
     void response(const QString &s);
     void error(const QString &s);
     void timeout(const QString &s);
-    void portListChanged();
+
     void positionChanged(QVariant);
     void timeChanged(QVariant);
     void speedChanged(QVariant);
     void headingChanged(QVariant);
-//    void stateChanged(QVariant);
+    //    void stateChanged(QVariant);
     void avaliblePosition(double, double, double);
+
+    //     void portListChanged();
+    //    void qPortNameChanged();
+    //    void qBaudRateChanged();
 private:
     QString portName;
     //    QString request;
@@ -105,9 +109,9 @@ private:
     QStringList m_portList;
 
     void Decoding(QString);
-//    QString decimalDegreesToDMS(double coord);
+    //    QString decimalDegreesToDMS(double coord);
     QString DMTODMS(QString );
-//    QString getDM(QString);
+    //    QString getDM(QString);
     double DMTodecimalDegrees(QString);
 public slots:
     void onReadyOpenSerialPort(QVariant);

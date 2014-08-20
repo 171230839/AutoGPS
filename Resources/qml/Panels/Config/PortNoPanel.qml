@@ -5,7 +5,7 @@ Panel
 {
     signal contentUpdated()
 
-    property string selectedContent: serialPortThread.qPortName
+    property string selectedContent: serialPortThread.qPortName()
 
     function updateSelectedContent(updatedText)
     {
@@ -19,11 +19,12 @@ Panel
     {
        var component = Qt.createComponent("../../Controls/ModelObject.qml");
         var model = new Array();
-        var serialPortNo = serialPortThread.portList;
+        var serialPortNo = serialPortThread.portList();
+//        console.log("serialPortNo: " + serialPortNo);
         for(var i=0; i < serialPortNo.length; ++i)
         {
             var str = serialPortNo[i];
-            console.log("str:  " + str);
+//            console.log("str:  " + str);
             var object = component.createObject(portNoPanel, {text: str});
             object.modelSignal.connect(updateSelectedContent);
             model[i] = object

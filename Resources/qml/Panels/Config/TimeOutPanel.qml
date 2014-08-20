@@ -5,7 +5,7 @@ Panel
 {
     signal contentUpdated()
 
-    property string selectedContent: serialPortThread.qTimeout
+    property string selectedContent: serialPortThread.qTimeout()
     function updateSelectedContent(updatedText)
     {
         console.log("updateSelectedContent: " + updatedText );

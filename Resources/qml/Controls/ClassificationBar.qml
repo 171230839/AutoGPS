@@ -8,7 +8,7 @@ Rectangle
 	property color classificationColor: Qt.rgba(0, 1, 0, 1)
 
 	id: classificationBar
-	height: 20
+    height: 30
 	color: "black"
 	anchors.margins: 0
 	border.color: "black"
@@ -16,7 +16,7 @@ Rectangle
 
 	Rectangle
 	{
-		height: 20
+        height: 30
 		width: lbl.width + 20
 		color: classificationColor
 		anchors.horizontalCenter: parent.horizontalCenter

@@ -20,7 +20,7 @@ class MapController : public QObject
 public:
     explicit MapController(Map* inputMap, MapGraphicsView *inputGraphicsView, QObject* parent = 0);
     ~MapController();
-    void init();
+
     SimpleGraphicOverlay*  getSimpleGraphic() { return this->drawingOverlay;}
 private:
 

@@ -25,7 +25,6 @@ class QDeclarativeContext;
 namespace EsriRuntimeQt
 {
 class MapGraphicsView;
-
 }
 using namespace EsriRuntimeQt;
 
@@ -52,7 +51,7 @@ private:
     QObject* mainMenuUI;
     QDeclarativeContext * context ;
     MasterThread thread;
-    Camera camera;
+    Camera* camera;
 
     void setBasemapFirst();
     void setBasemapSecond();

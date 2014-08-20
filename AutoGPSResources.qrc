@@ -58,5 +58,6 @@
         <file>Resources/icons/Basemap-Normal.png</file>
         <file>Resources/icons/Basemap-Pressed.png</file>
         <file>Resources/qml/Panels/Worker/PathsPanel.qml</file>
+        <file>Resources/qml/PanelContainers/Camera.qml</file>
     </qresource>
 </RCC>

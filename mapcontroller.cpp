@@ -13,9 +13,9 @@ static const double  carWidth = 2.0;
 MapController::MapController(Map* inputMap,
                              MapGraphicsView* inputGraphicsView,
                              QObject* parent):
-    QObject(parent),
     map(inputMap),
     mapGraphicsView(inputGraphicsView),
+    QObject(parent),
     showOwnship(true),
     followOwnship(false),
     isMapReady(false),
@@ -37,6 +37,7 @@ MapController::~MapController()
 void MapController::onMapReady()
 {
     isMapReady = true;
+    map->addLayer(pointsLayer);
     //    map->setScale(500.0);
 }
 
@@ -274,14 +275,7 @@ void MapController::mousePress(QMouseEvent mouseEvent)
 
 }
 
-void MapController::init()
-{
-    if (map)
-    {
-        map->addLayer(pointsLayer);
-    }
 
-}
 
 void MapController::onClearClicked()
 {

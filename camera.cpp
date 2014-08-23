@@ -4,94 +4,129 @@
 #include <QCamera>
 #include <QCameraImageCapture>
 #include <MapGraphicsView.h>
+#include <QStackedWidget>
+#include <QStackedLayout>
+#include <QGraphicsProxyWidget>
+#include <QTimer>
+#include <QLabel>
 
-
-Camera::Camera( MapGraphicsView *inputGraphicsView, QObject *parent) :
-    mapGraphicsView(inputGraphicsView),
-     QObject(parent),
-    cameraL(0),
-    imageCaptureLeft(0),
-    mediaRecorderLeft(0),
-    cameraR(0),
-    imageCaptureRight(0),
-    mediaRecorderRight(0),
-    viewfinderL(0),
-    viewfinderR(0),
-    widget(0)
+Camera::Camera(MapGraphicsView*view,  QObject *parent) :
+    mapGraphicsView(view),
+    QObject(parent),
+      proxyWidget(NULL),
+    captureLabel(NULL),
+    stackedWidget(NULL),
+    currentIndex(-1)
+//    widget(NULL)
 {
-    QByteArray cameraDeviceLeft;
-    QByteArray cameraDeviceRight;
-    QStringList m_descriptionList;
-    QList<QByteArray> devices = QCamera::availableDevices();
-//    foreach(const QByteArray deviceName, devices) {
-//        QString description = camera->deviceDescription(deviceName);
-//        m_descriptionList.append(description);
-//    }
-    if (devices.size() > 0)
-    {
-        cameraDeviceLeft = devices.at(0);
-        m_cameraLeft = QCamera::deviceDescription(cameraDeviceLeft);
-        setCameraLeft(cameraDeviceLeft);
-    }
-    if (devices.size() > 1)
-    {
-        cameraDeviceRight = devices.at(1);
-        m_cameraRight = QCamera::deviceDescription(cameraDeviceRight);
-        setCameraRight(cameraDeviceRight);
-    }
+    proxyWidget = new QGraphicsProxyWidget();
 
-    widget = new QWidget();
-    widget->setFixedHeight(mapGraphicsView->height() * 3 / 4 ) ;
-    widget->setFixedWidth(mapGraphicsView->width());
-    widget->setLayoutDirection(Qt::LeftToRight);
+    QWidget *widget = new QWidget();
     widget->setVisible(false);
-    widget->setObjectName("cameraWidget");
-   viewfinderL = new QCameraViewfinder(widget);
+    QList<QByteArray> devices = QCamera::availableDevices();
+    QList<QCamera*> cameraList;
+    widget->setContentsMargins(0,0,0,0);
+    stackedWidget = new QStackedWidget(widget);
+    stackedWidget->setVisible(false);
+    stackedWidget->setContentsMargins(0,0,0,0);
 
-//   viewfinderL->width()=  mapGraphicsView->width() / 2;
-//   viewfinderL->height() = mapGraphicsView->height() * 3 / 4;
-//   viewfinderL->setTopMargin(mapGraphicsView->height() / 4 + 30);
-   viewfinderL->setFixedHeight(widget->height()) ;
-   viewfinderL->setFixedWidth(widget->width() / 2);
-//   viewfinderL->setVisible(false);
-   viewfinderR = new QCameraViewfinder(widget);
-   viewfinderR->setFixedHeight(widget->height()) ;
-   viewfinderR->setFixedWidth(widget->width() / 2);
-    mapGraphicsView->scene()->addWidget(widget);
+  captureLabel = new QLabel(widget);
+  captureLabel->setContentsMargins(0,0,0,0);
+//  QPixmap pix;
+//  pix.load("camera-0-00-18-55");
+//  this->captureLabel->setPixmap(pix);
+    foreach(QByteArray byteArray, devices)
+    {
+        QCameraViewfinder *viewfinder = new QCameraViewfinder(stackedWidget);
+        stackedWidget->layout()->addWidget(viewfinder);
+        QString description = QCamera::deviceDescription(byteArray);
+        this->cameraList.append(description);
+        QCamera * camera = new QCamera(byteArray, this);
+        camera->setViewfinder(viewfinder);
+//        camera->start();
+        cameraList.append(camera);
+        camera->setCaptureMode(QCamera::CaptureStillImage);
+        QCameraImageCapture* imageCapture = new QCameraImageCapture(camera);
+        cameraImageCaptureList.append(imageCapture);
+
+//        connect(imageCapture, SIGNAL(imageCaptured(int,QImage)), this, SLOT(processCapturedImage(int,QImage)));
+
+    }
+    proxyWidget->setWidget(widget);
+
+    proxyWidget->setContentsMargins(0,0,0,0);
+    mapGraphicsView->scene()->addItem(proxyWidget);
+    foreach(QCamera* camera, cameraList)
+    {
+        camera->start();
+    }
+//    QTimer *timer = new QTimer(this);
+//    connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+//    timer->start(1000);
+    QTimer::singleShot(1000, this, SLOT(onTimeout()));
 }
 
-
-QString Camera::getCameraRightD()
+void Camera::onTimeout()
 {
-    return m_cameraRight;
+    qDebug()<<"onTimeout"<<cameraImageCaptureList.size();
+    QTime time = QTime::currentTime();
+    QString timeString = time.toString("hh-mm-ss");
+
+//    foreach( QCameraImageCapture* capture, cameraImageCaptureList)
+//    {
+//        capture->capture(file);
+//    }
+    for (int i = 0; i < cameraImageCaptureList.size(); ++i)
+    {
+        QCameraImageCapture* capture = cameraImageCaptureList.at(i);
+         QString file = "camera-" + QString::number(i) + "-" + timeString;
+//         qDebug()<<"file"<<file;
+//         qDebug()<<"captur4e"<<capture;
+        int requestId = capture->capture(file);
+//         qDebug()<<"requestId"<<requestId;
+//        map[i] = requestId;
+    }
 }
 
-QString Camera::getCameraLeftD()
+QStringList Camera::getCameraList()
 {
-    return m_cameraLeft;
+    return this->cameraList;
 }
 
-void Camera::setCameraLeft(QByteArray cameraDeviceLeft)
-{
-        if (cameraDeviceLeft.isEmpty())
-            return;
-        else
-            cameraL = new QCamera(cameraDeviceLeft);
-//        connect(camera, SIGNAL(stateChanged(QCamera::State)), this, SLOT(updateCameraState(QCamera::State)));
-//        connect(camera, SIGNAL(error(QCamera::Error)), this, SLOT(displayCameraError()));
-        cameraL->setViewfinder(viewfinderL);
-        cameraL->start();
-
-}
-
-
-
-void Camera::setCameraRight(QByteArray cameraDeviceRight)
+void Camera::setGeometry(const QRectF& rectf )
 {
 
+        qDebug()<<"rectf x"<<rectf.x()<<rectf.y();
+    this->proxyWidget->setGeometry(rectf);
+        QRect rect = rectf.toRect();
+//  this->captureLabel->setGeometry(rectf.x()/2, rectf.y()/2, rectf.x(), rectf.y());
+    this->stackedWidget->setGeometry(rectf.toRect());
+    this->captureLabel->setGeometry(rect.width() / 2, rect.height()/2, rect.width(), rect.height());
 }
 
-QWidget *Camera::getWidget()
+void Camera::setVisible(bool state)
 {
-    return this->widget;
+    this->proxyWidget->setVisible(state);
 }
+
+void Camera::handleCameraIndexChanged(int  index)
+{
+    currentIndex = index;
+       this->stackedWidget->	setCurrentIndex(index);
+}
+
+//void Camera::processCapturedImage(int requestId, QImage img)
+//{
+//    qDebug()<<"processCapturedImage"<<requestId;
+//    int id = map.key(requestId, -1);
+//    if (id == -1)
+//        return;
+
+//    QImage scaledImage = img.scaled(stackedWidget->size(),
+//                                    Qt::KeepAspectRatio,
+//                                    Qt::SmoothTransformation);
+//    this->captureLabel->setPixmap(QPixmap::fromImage(scaledImage));
+//    QPixmap pix;
+//    pix.load("camera-0-00-18-55");
+//    this->captureLabel->setPixmap(pix);
+//}

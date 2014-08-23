@@ -4,47 +4,53 @@
 
 #include <QObject>
 #include <QStringList>
+#include <QImage>
+#include <QMap>
 
 class QCamera;
 class QCameraImageCapture;
 class QMediaRecorder;
 class QCameraViewfinder;
+class QGraphicsProxyWidget;
+class QStackedWidget;
+class QLabel;
 namespace EsriRuntimeQt
 {
 class MapGraphicsView;
 }
 using namespace EsriRuntimeQt;
+
+
+
+
 class Camera : public QObject
 {
     Q_OBJECT
-//    Q_PROPERTY(QStringList descriptionList READ descriptionList )
+    //    Q_PROPERTY(QStringList descriptionList READ descriptionList )
 public:
-    explicit Camera(MapGraphicsView *inputGraphicsView,QObject *parent = 0);
-    Q_INVOKABLE QString getCameraRightD();
-    Q_INVOKABLE QString getCameraLeftD();
-    QWidget* getWidget();
+    Camera(MapGraphicsView * view, QObject* parent = 0);
+    Q_INVOKABLE QStringList getCameraList();
+    void setGeometry(const QRectF&  );
+    void setVisible(bool);
+
 signals:
 
 public slots:
-
+    void handleCameraIndexChanged(int  index);
+//    void processCapturedImage(int,QImage);
+    void onTimeout();
 private:
     MapGraphicsView* mapGraphicsView;
-    QCamera *cameraL;
-    QCameraImageCapture *imageCaptureLeft;
-    QMediaRecorder* mediaRecorderLeft;
-
-    QCamera *cameraR;
-    QCameraImageCapture *imageCaptureRight;
-    QMediaRecorder* mediaRecorderRight;
-
-    QString m_cameraLeft;
-    QString m_cameraRight;
-    void setCameraLeft(QByteArray);
-    void setCameraRight(QByteArray);
-
-    QCameraViewfinder* viewfinderR;
-    QCameraViewfinder* viewfinderL;
-    QWidget * widget;
+    QStringList cameraList;
+//    QStackedWidget* widget;
+    QGraphicsProxyWidget* proxyWidget;
+      QList<QCameraImageCapture*> cameraImageCaptureList;
+      QMap<int, int> map;
+       QLabel* captureLabel;
+       QStackedWidget * stackedWidget;
+       int currentIndex;
 };
+
+
 
 #endif // CAMERA_H

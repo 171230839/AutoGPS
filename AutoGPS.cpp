@@ -19,7 +19,9 @@ AutoGPS::AutoGPS (QWidget *parent):
     engine(NULL),
     overlayWidget(NULL),
     overlayUI(NULL),
-    mainMenuUI(NULL)
+    mainMenuUI(NULL),
+    context(NULL),
+    camera(NULL)
 {
 
     this->setWindowFlags(Qt::CustomizeWindowHint);
@@ -45,12 +47,12 @@ AutoGPS::AutoGPS (QWidget *parent):
     //    map.addLayer(tiledLayer);
 
     mapController = new MapController(&map, mapGraphicsView, this);
-//     camera = new Camera(mapGraphicsView, this);
+     camera = new Camera(mapGraphicsView, this);
 
     engine = new QDeclarativeEngine(this);
     context = new QDeclarativeContext(engine->rootContext());
     context->setContextProperty("serialPortThread", &thread);
-//    context->setContextProperty("cameraObject", camera);
+    context->setContextProperty("cameraObject", camera);
 
 
     QDeclarativeComponent component(engine, QUrl(UI_OVERLAY_PATH), engine);
@@ -90,6 +92,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(&thread, SIGNAL(speedChanged(QVariant)), overlayUI, SLOT(updateSpeed(QVariant)));
     connect(&thread, SIGNAL(headingChanged(QVariant)), overlayUI, SLOT(updateHeading(QVariant)));
     connect(overlayUI, SIGNAL(basemapChanged(QString)), this, SLOT(handleBasemapChanged(QString)));
+    connect(overlayUI, SIGNAL(cameraIndexChanged(int)), camera, SLOT(handleCameraIndexChanged(int)));
 
     mainMenuUI = overlayUI->findChild<QObject*>("mainMenu");
     if (mainMenuUI)
@@ -170,7 +173,9 @@ void AutoGPS::resizeEvent(QResizeEvent* event)
     if (map.isInitialized())
     {
         QRectF sceneRect = mapGraphicsView->sceneRect();
+//        qDebug()<<"sceneRect height"<<sceneRect.height();
         overlayWidget->setGeometry(sceneRect);
+        camera->setGeometry(sceneRect);
     }
     QMainWindow::resizeEvent(event);
 }
@@ -200,6 +205,7 @@ void AutoGPS::handleBasemapChanged(QString basemap)
 
 void AutoGPS::setBasemapFirst()
 {
+    qDebug()<<"setBasemapFirst";
     QStringList layerNames = map.layerNames();
     if (layerNames.contains("tiledLayer"))
     {
@@ -215,15 +221,13 @@ void AutoGPS::setBasemapFirst()
     }
     if (camera)
     {
-        if (camera->getWidget())
-        {
-            camera->getWidget()->setVisible(false);
-        }
+       camera->setVisible(false);
     }
 }
 
 void AutoGPS::setBasemapSecond()
 {
+    qDebug()<<"setBasemapSecond";
     QStringList layerNames = map.layerNames();
     if (layerNames.contains("tiledLayer"))
     {
@@ -240,10 +244,7 @@ void AutoGPS::setBasemapSecond()
 
     if (camera)
     {
-        if (camera->getWidget())
-        {
-            camera->getWidget()->setVisible(true);
-        }
+        camera->setVisible(true);
     }
 
 }
@@ -252,3 +253,4 @@ void AutoGPS::setBasemapThird()
 {
 
 }
+

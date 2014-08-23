@@ -7,10 +7,12 @@ import "Controls"
 LayoutItem
 {
     signal basemapChanged(string name)
+    signal cameraIndexChanged(int  index)
     signal homeClicked()
     signal zoomInClicked()
     signal zoomOutClicked()
     signal panClicked(string direction)
+
 
     property string currentItem : "Map"
 
@@ -85,6 +87,7 @@ LayoutItem
             anchors.rightMargin: 5
             anchors.verticalCenter:  parent.verticalCenter
             //        visible: menu.state != "open"
+            scrollList:  ["Map", "Camera"]
             Component.onCompleted:
             {
                 itemChanged.connect(window.basemapChanged);
@@ -171,7 +174,7 @@ LayoutItem
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.margins: 3
-        visible: window.currentItem === "Map"
+//        visible: window.currentItem === "Map"
     }
 
     NavigationControl2
@@ -202,17 +205,34 @@ LayoutItem
         fillMode: Image.PreserveAspectFit
         visible: window.currentItem === "Map"
     }
-     Camera
-     {
-         id: camera
-         anchors.top: classificationBar.bottom
-         anchors.horizontalCenter: parent.horizontalCenter
-         windowWidth: window.width / 2
-         windowHeight: window.height /4
-         visible: window.currentItem === "Camera"
-         width: window.width
-         height:  window.height / 4
-     }
-
+    //     Camera
+    //     {
+    //         id: camera
+    //         anchors.top: classificationBar.bottom
+    //         anchors.horizontalCenter: parent.horizontalCenter
+    //         windowWidth: window.width / 2
+    //         windowHeight: window.height /4
+    //         visible: window.currentItem === "Camera"
+    //         width: window.width
+    //         height:  window.height / 4
+    //     }
+    ScrollButton
+    {
+        id: cameraScroll
+        scrollButtonDefaultIcon: "../../icons/Basemap-Normal.png"
+        anchors.top: classificationBar.bottom
+        anchors.topMargin: 10
+        anchors.right: parent.right
+        //       anchors.left: parent.right
+        //       anchors.horizontalCenter: parent.horizontalCenter
+        anchors.rightMargin: 5
+        width: 200
+        scrollList:  cameraObject.getCameraList()
+        visible: window.currentItem === "Camera"
+        Component.onCompleted:
+        {
+            indexChanged.connect(window.cameraIndexChanged)
+        }
+    }
 
 }

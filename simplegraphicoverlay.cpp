@@ -38,7 +38,9 @@ QRectF SimpleGraphicOverlay::boundingRect() const
 {
     if (m_pMapGraphicsView)
     {
+        qDebug()<<"m_pMapGraphicsView.width" << m_pMapGraphicsView->width();
         return QRect(0, 0, m_pMapGraphicsView->width(), m_pMapGraphicsView->height());
+
     }
     return QRectF();
 }

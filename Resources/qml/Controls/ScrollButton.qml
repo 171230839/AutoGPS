@@ -3,7 +3,7 @@ import QtQuick 1.1
 Item
 {
     property int currentIndex
-    property variant scrollList: ["Map", "Camera", "3D"]
+    property variant scrollList
     property string text1
     property string text2
     property string text3
@@ -11,12 +11,14 @@ Item
 
 
     signal itemChanged(string name)
+    signal indexChanged(int index)
 
     function stateChange()
     {
         ++currentIndex
 
         currentIndex = currentIndex % scrollList.length
+        indexChanged(currentIndex)
 
         if (state == "one")
         {

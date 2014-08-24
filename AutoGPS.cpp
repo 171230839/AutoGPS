@@ -93,6 +93,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(&thread, SIGNAL(headingChanged(QVariant)), overlayUI, SLOT(updateHeading(QVariant)));
     connect(overlayUI, SIGNAL(basemapChanged(QString)), this, SLOT(handleBasemapChanged(QString)));
     connect(overlayUI, SIGNAL(cameraIndexChanged(int)), camera, SLOT(handleCameraIndexChanged(int)));
+    connect(overlayUI, SIGNAL(captureDisplay(bool)), camera, SLOT(handleCaptureDisplay(bool)));
 
     mainMenuUI = overlayUI->findChild<QObject*>("mainMenu");
     if (mainMenuUI)

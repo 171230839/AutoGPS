@@ -37,8 +37,9 @@ signals:
 
 public slots:
     void handleCameraIndexChanged(int  index);
-//    void processCapturedImage(int,QImage);
+    void processCapturedImage(int,QImage);
     void onTimeout();
+    void handleCaptureDisplay(bool);
 private:
     MapGraphicsView* mapGraphicsView;
     QStringList cameraList;
@@ -49,6 +50,7 @@ private:
        QLabel* captureLabel;
        QStackedWidget * stackedWidget;
        int currentIndex;
+
 };
 
 

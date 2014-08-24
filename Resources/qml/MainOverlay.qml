@@ -12,7 +12,7 @@ LayoutItem
     signal zoomInClicked()
     signal zoomOutClicked()
     signal panClicked(string direction)
-
+    signal captureDisplay(bool toggleState)
 
     property string currentItem : "Map"
 
@@ -235,4 +235,21 @@ LayoutItem
         }
     }
 
+    ToggleButton
+    {
+        id: captureButton
+        buttonDefaultIcon: "../../icons/Nav-Controls-South-Normal.png"
+        buttonActiveIcon: "../../icons/Nav-Controls-South-Pressed.png"
+        anchors.top: cameraScroll.bottom
+        anchors.right: parent.right
+        anchors.topMargin: 10
+        anchors.rightMargin: 5
+        visible: window.currentItem === "Camera"
+
+        Component.onCompleted:
+        {
+            itemClicked.connect(window.captureDisplay);
+        }
+        z: 2
+    }
 }

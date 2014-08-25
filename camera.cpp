@@ -70,7 +70,7 @@ Camera::Camera(MapGraphicsView*view,  QObject *parent) :
 void Camera::onTimeout()
 {
 
-    qDebug()<<"onTimeout"<<cameraImageCaptureList.size();
+//    qDebug()<<"onTimeout"<<cameraImageCaptureList.size();
     QTime time = QTime::currentTime();
     QString timeString = time.toString("hh-mm-ss");
 
@@ -102,10 +102,8 @@ void Camera::setGeometry(const QRectF& rectf )
         qDebug()<<"rectf x"<<rectf.height()<<rectf.width();
     this->proxyWidget->setGeometry(rectf);
         QRect rect = rectf.toRect();
-//  this->captureLabel->setGeometry(rectf.x()/2, rectf.y()/2, rectf.x(), rectf.y());
-    this->stackedWidget->setGeometry(rectf.toRect());
-//    this->captureLabel->setGeometry(rect.width() / 2, rect.height()/2, rect.width(), rect.height());
-        this->captureLabel->setGeometry(0,0, rect.width()/2, rect.height() / 2);
+    this->stackedWidget->setGeometry(rect);
+       this->captureLabel->setGeometry(0,0, rect.width()/2, rect.height() / 2);
 }
 
 void Camera::setVisible(bool state)
@@ -121,12 +119,12 @@ void Camera::handleCameraIndexChanged(int  index)
 
 void Camera::processCapturedImage(int requestId, QImage img)
 {
-    qDebug()<<"processCapturedImage"<<requestId;
+//    qDebug()<<"processCapturedImage"<<requestId;
 //    int id = map.key(requestId, -1);
 //    if (id == -1)
 //        return;
-    qDebug()<<"label size"<<captureLabel->size();
-    qDebug()<<"widget size"<<stackedWidget->size();
+//    qDebug()<<"label size"<<captureLabel->size();
+//    qDebug()<<"widget size"<<stackedWidget->size();
 
     QImage scaledImage = img.scaled(stackedWidget->size()/2,
                                       Qt::KeepAspectRatio,

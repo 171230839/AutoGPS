@@ -68,7 +68,8 @@ private:
     void getPath(int);
     void getFrontPath(int, double);
     void getBehindPath(int, double);
-
+    bool bTiledLayerVisible;
+//    bool bTiledLayerVisibleGreater;
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);
@@ -97,6 +98,7 @@ public slots:
     void handleSelectPointToggled(bool);
     void handleGetPathClicked();
     void handleUnSelectClicked();
+    void onMouseWheel(QWheelEvent);
 };
 
 #endif // MAPCONTROLLER_H

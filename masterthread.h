@@ -113,8 +113,13 @@ private:
     QString DMTODMS(QString );
     //    QString getDM(QString);
     double DMTodecimalDegrees(QString);
+    bool bStartRecord;
+    bool bStopAndSave;
 public slots:
     void onReadyOpenSerialPort(QVariant);
+    void onStartRecordClicked();
+    void onStopAndSaveClicked();
+    void onPlayInSimulatorClicked();
 };
 //! [0]
 

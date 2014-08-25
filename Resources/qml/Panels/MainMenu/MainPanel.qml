@@ -7,6 +7,7 @@ Panel
 
     property Panel configPanel
     property Panel workerPanel
+    property Panel recordPanel
 
     id: mainPanel
     title: "Main Menu"
@@ -14,8 +15,8 @@ Panel
     model:
         [
           ModelObject { text: "Start Work"; onNoArgModelSignal: stack.addPanel(workerPanel);},
-        ModelObject { text: "Config"; onNoArgModelSignal: stack.addPanel(configPanel); }
-
+        ModelObject { text: "Config"; onNoArgModelSignal: stack.addPanel(configPanel); },
+        ModelObject { text: "Record"; onNoArgModelSignal: stack.addPanel(recordPanel);}
     ]
 
     PushButton

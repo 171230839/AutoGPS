@@ -23,10 +23,9 @@ MapController::MapController(Map* inputMap,
     bPoints(false),
     readyPointList(false),
     graphicId(0),
-    bSelectPoint(false)
+    bSelectPoint(false),
+    bTiledLayerVisible(true)
 {
-
-
 }
 
 MapController::~MapController()
@@ -38,7 +37,11 @@ void MapController::onMapReady()
 {
     isMapReady = true;
     map->addLayer(pointsLayer);
-    //    map->setScale(500.0);
+    qDebug()<<"minScale"<<map->minScale();
+    qDebug()<<"maxScale"<<map->maxScale();
+    qDebug()<<"scale"<<map->scale();
+
+    map->setScale(6010.79);
 }
 
 
@@ -71,12 +74,51 @@ void MapController::handleToggleFollowMe(bool state)
 
 void MapController::handleZoomIn()
 {
-    map->zoom(0.5);
+//    map->zoom(0.5);
+    map->setScale(map->scale() / 2);
+    qDebug()<<"map  scaled zoomin"<<map->scale();
+    if (map->scale() < 100)
+    {
+        if (bTiledLayerVisible)
+        {
+            QStringList layerNames = map->layerNames();
+            if (layerNames.contains("tiledLayer"))
+            {
+                Layer layer = map->layer("tiledLayer");
+                layer.setVisible(false);
+            }
+            bTiledLayerVisible = false;
+        }
+    }
+
+
+    QMatrix matrix = mapGraphicsView->matrix();
+    qDebug()<<"m11 hbox scale"<<matrix.m11();
+    qDebug()<<"m21 vbox scale"<< matrix.m22();
+
 }
 
 void MapController::handleZoomOut()
 {
-    map->zoom(2);
+//    map->zoom(2);
+    map->setScale(map->scale() *  2);
+    if (map->scale() >= 100)
+    {
+        if (!bTiledLayerVisible)
+        {
+            QStringList layerNames = map->layerNames();
+            if (layerNames.contains("tiledLayer"))
+            {
+                Layer layer = map->layer("tiledLayer");
+                layer.setVisible(true);
+            }
+            bTiledLayerVisible = true;
+        }
+    }
+    qDebug()<<"map  scaled zoomout"<<map->scale();
+    QMatrix matrix = mapGraphicsView->matrix();
+    qDebug()<<"m11 hbox scale"<<matrix.m11();
+    qDebug()<<"m21 vbox scale"<< matrix.m22();
 }
 
 void MapController::handlePan(QString direction)
@@ -402,4 +444,34 @@ void MapController::getBehindPath(int order, double behindAngle)
 void MapController::handleUnSelectClicked()
 {
     pointsLayer.clearSelection();
+}
+
+void MapController::onMouseWheel(QWheelEvent e)
+{
+    if (map->scale() < 100)
+    {
+        if (bTiledLayerVisible)
+        {
+            QStringList layerNames = map->layerNames();
+            if (layerNames.contains("tiledLayer"))
+            {
+                Layer layer = map->layer("tiledLayer");
+                layer.setVisible(false);
+            }
+            bTiledLayerVisible = false;
+        }
+    }
+    else if  (map->scale() >= 100)
+    {
+        if (!bTiledLayerVisible)
+        {
+            QStringList layerNames = map->layerNames();
+            if (layerNames.contains("tiledLayer"))
+            {
+                Layer layer = map->layer("tiledLayer");
+                layer.setVisible(true);
+            }
+            bTiledLayerVisible = true;
+        }
+    }
 }

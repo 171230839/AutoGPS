@@ -36,11 +36,15 @@ AutoGPS::AutoGPS (QWidget *parent):
     }
     map.setWrapAroundEnabled(false);
     map.setEsriLogoVisible(false);
+    map.setMinScale(10);
+
     this->setCentralWidget(mapGraphicsView);
     QString tpkPath = QApplication::applicationDirPath() + QDir::separator() + "AutoGPS.tpk";
     ArcGISLocalTiledLayer tiledLayer(tpkPath);
     tiledLayer.setName("tiledLayer");
+    qDebug()<<" items size"<<mapGraphicsView->items().size();
     map.addLayer(tiledLayer);
+    qDebug()<<" items size"<<mapGraphicsView->items().size();
     //    ArcGISTiledMapServiceLayer tiledLayer("http://services.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer");
     //    map.addLayer(tiledLayer);
     //    ArcGISLocalTiledLayer tiledLayer("D:/Qt/QtSampleApplication_10.2.3_win32/sdk/samples/data/tpks/Topographic.tpk");
@@ -77,7 +81,9 @@ AutoGPS::AutoGPS (QWidget *parent):
     QGraphicsLayoutItem* qmlUILayout = qobject_cast<QGraphicsLayoutItem*>(overlayUI);
     layout->addItem(qmlUILayout);
     overlayWidget->setLayout(layout);
+
     mapGraphicsView->scene()->addItem(overlayWidget);
+
 
     connect(overlayUI, SIGNAL(homeClicked()), mapController, SLOT(handleHomeClicked()));
     connect(overlayUI, SIGNAL(zoomInClicked()), mapController, SLOT(handleZoomIn()));
@@ -137,13 +143,16 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(pathsPanel, SIGNAL(unSelectClicked()), mapController, SLOT(handleUnSelectClicked()));
     }
 
-    //    thread.init();
-    //    connect(&thread, SIGNAL(response(QString)), mapController, SLOT(onResponse(QString)));
-    //    connect(&thread, SIGNAL(timeout(QString)), mapController, SLOT(onTimeout(QString)));
-    //    connect(&thread, SIGNAL(error(QString)), mapController, SLOT(onError(QString)));
-
+    QObject *record = overlayUI->findChild<QObject*>("record");
+    if (record)
+    {
+        connect(record, SIGNAL(startRecordClicked()), &thread, SLOT(onStartRecordClicked()));
+        connect(record, SIGNAL(stopAndSaveClicked()), &thread, SLOT(onStopAndSaveClicked()));
+        connect(record, SIGNAL(playInSimulatorClicked()), &thread, SLOT(onPlayInSimulatorClicked()));
+    }
 
     connect(&map, SIGNAL(mapReady()), mapController, SLOT(onMapReady()));
+    connect(&map, SIGNAL(mouseWheel(QWheelEvent)), mapController, SLOT(onMouseWheel(QWheelEvent)));
 
     QTimer* timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateNorthArrow()));
@@ -158,6 +167,7 @@ AutoGPS::AutoGPS (QWidget *parent):
 
 
      thread.start();
+
 }
 
 AutoGPS::~AutoGPS()

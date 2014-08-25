@@ -21,6 +21,7 @@ Item
         //    reportsPanel: reports.panel
         configPanel: config.panel
         workerPanel: worker.panel
+        recordPanel: record.panel
         anchors.fill: parent
         stack: mainMenu.stack;
         visible: false
@@ -57,4 +58,10 @@ Item
 //         stack: mainMenu.stack
 //         anchors.fill: parent
 //     }
+    Record
+    {
+        id: record
+        stack: mainMenu.stack
+        anchors.fill:  parent
+    }
 }

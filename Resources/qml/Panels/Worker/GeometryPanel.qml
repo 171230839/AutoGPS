@@ -21,6 +21,5 @@ Panel{
         ModelObject { text: "toPolygon"; Component.onCompleted: noArgModelSignal.connect(geometryPanel.toPolygonClicked);},
         ModelObject { text: "Clear"; Component.onCompleted: noArgModelSignal.connect(geometryPanel.clearClicked);},
         ModelObject { text: "OK"; Component.onCompleted: noArgModelSignal.connect(geometryPanel.okClicked);onNoArgModelSignal: {geometryPanel.goBack(); stack.addPanel(pathsPanel) }}
-
 ]
 }

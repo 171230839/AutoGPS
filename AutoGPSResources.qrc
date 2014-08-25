@@ -59,5 +59,8 @@
         <file>Resources/icons/Basemap-Pressed.png</file>
         <file>Resources/qml/Panels/Worker/PathsPanel.qml</file>
         <file>Resources/qml/PanelContainers/Camera.qml</file>
+        <file>Resources/qml/Panels/Record/RecordPanel.qml</file>
+        <file>Resources/qml/PanelContainers/Record.qml</file>
+        <file>Resources/qml/Panels/Record/SerialRecordPanel.qml</file>
     </qresource>
 </RCC>

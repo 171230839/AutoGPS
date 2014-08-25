@@ -104,4 +104,7 @@ OTHER_FILES += \
     Resources/qml/Panels/Worker/WorkerPanel.qml \
     Resources/qml/Panels/Worker/GeometryPanel.qml \
     Resources/qml/Panels/Worker/PathsPanel.qml \
-    Resources/qml/PanelContainers/Camera.qml
+    Resources/qml/PanelContainers/Camera.qml \
+    Resources/qml/PanelContainers/Record.qml \
+    Resources/qml/Panels/Record/RecordPanel.qml \
+    Resources/qml/Panels/Record/SerialRecordPanel.qml

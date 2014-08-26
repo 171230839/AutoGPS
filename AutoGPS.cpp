@@ -10,6 +10,8 @@
 #include <QGraphicsWidget>
 #include <MapGraphicsView.h>
 
+
+
 static const QString UI_OVERLAY_PATH("qrc:/Resources/qml/MainOverlay.qml");
 
 AutoGPS::AutoGPS (QWidget *parent):
@@ -21,6 +23,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     overlayUI(NULL),
     mainMenuUI(NULL),
     context(NULL),
+    thread(this, this),
     camera(NULL)
 {
 
@@ -100,7 +103,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(overlayUI, SIGNAL(basemapChanged(QString)), this, SLOT(handleBasemapChanged(QString)));
     connect(overlayUI, SIGNAL(cameraIndexChanged(int)), camera, SLOT(handleCameraIndexChanged(int)));
     connect(overlayUI, SIGNAL(captureDisplay(bool)), camera, SLOT(handleCaptureDisplay(bool)));
-
+    connect(&thread, SIGNAL(error(QVariant)), overlayUI, SLOT(error(QVariant)));
     mainMenuUI = overlayUI->findChild<QObject*>("mainMenu");
     if (mainMenuUI)
     {
@@ -148,7 +151,13 @@ AutoGPS::AutoGPS (QWidget *parent):
     {
         connect(record, SIGNAL(startRecordClicked()), &thread, SLOT(onStartRecordClicked()));
         connect(record, SIGNAL(stopAndSaveClicked()), &thread, SLOT(onStopAndSaveClicked()));
+        connect(record, SIGNAL(translateToXmlClicked()), &thread, SLOT(onTranslateToXmlClicked()));
+
+        connect(record, SIGNAL(xmlStartRecordClicked()), &thread, SLOT(onXmlStartRecordClicked()));
+        connect(record, SIGNAL(xmlStopAndSaveClicked()), &thread, SLOT(onXmlStopAndSaveClicked()));
+        connect(record, SIGNAL(selectXmlFileClicked()), &thread, SLOT(onSelectXmlFileClicked()));
         connect(record, SIGNAL(playInSimulatorClicked()), &thread, SLOT(onPlayInSimulatorClicked()));
+        connect(record, SIGNAL(paintGeometryClicked()), &thread, SLOT(onPaintGeometryClicked()));
     }
 
     connect(&map, SIGNAL(mapReady()), mapController, SLOT(onMapReady()));

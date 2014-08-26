@@ -5,7 +5,7 @@ Panel{
     id: recordPanel
     property Stack stack
     property Panel serialRecordPanel
-
+    property Panel xmlRecordPanel
 
 
     title: "Record"
@@ -13,7 +13,7 @@ Panel{
     onGoBack: stack.removePanel()
     delegate: MultiDelegate{}
     model:[
-        ModelObject { text: "SerialPort Record"; onNoArgModelSignal: { stack.addPanel(serialRecordPanel)}}
-//        ModelObject { text: "get Paths"; onNoArgModelSignal: { }}
+        ModelObject { text: "SerialPort Record"; onNoArgModelSignal: { stack.addPanel(serialRecordPanel)}},
+        ModelObject { text: "Xml Record"; onNoArgModelSignal: {stack.addPanel(xmlRecordPanel) }}
     ]
 }

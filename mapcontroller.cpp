@@ -163,6 +163,7 @@ void MapController::handleResetMap()
 
 void MapController::onAvaliblePosition(double lat, double lon, double heading)
 {
+//    qDebug()<<"onAvaliblePosition"<<lat<<lon<<heading;
     if (!isMapReady ||  mapGraphicsView == 0)
         return;
     Point mapPoint = GeometryEngine::project(lon, lat, map->spatialReference());
@@ -187,7 +188,7 @@ void MapController::onAvaliblePosition(double lat, double lon, double heading)
     drawingOverlay->setVisible(showOwnship);
     if (showOwnship)
     {
-        //        qDebug()<<"on showOwnship";
+//                qDebug()<<"on showOwnship";
         drawingOverlay->setPosition(mapPoint);
         drawingOverlay->setAngle(heading);
     }

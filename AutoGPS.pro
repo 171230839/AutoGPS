@@ -107,4 +107,5 @@ OTHER_FILES += \
     Resources/qml/PanelContainers/Camera.qml \
     Resources/qml/PanelContainers/Record.qml \
     Resources/qml/Panels/Record/RecordPanel.qml \
-    Resources/qml/Panels/Record/SerialRecordPanel.qml
+    Resources/qml/Panels/Record/SerialRecordPanel.qml \
+    Resources/qml/Panels/Record/XmlRecordPanel.qml

@@ -46,7 +46,9 @@
 #include <QMutex>
 #include <QStringList>
 #include <QVariant>
-
+class QXmlStreamWriter;
+#include <QXmlStreamReader>
+class QWidget;
 //! [0]
 class MasterThread : public QThread
 {
@@ -59,7 +61,7 @@ class MasterThread : public QThread
     //    Q_PROPERTY(QString qParity READ qParity NOTIFY qParityChanged)
     //    Q_PROPERTY(QString qTimeout READ qTimeout NOTIFY qTimeoutChanged)
 public:
-    MasterThread(QObject *parent = 0);
+    MasterThread(QObject*parent = 0, QWidget* widget= 0);
     ~MasterThread();
     void run();
 
@@ -81,14 +83,14 @@ public:
     void storeSerialConfig();
     void init();
 signals:
-    void response(const QString &s);
-    void error(const QString &s);
+
+    void error(const QVariant &s);
     void timeout(const QString &s);
 
-    void positionChanged(QVariant);
-    void timeChanged(QVariant);
-    void speedChanged(QVariant);
-    void headingChanged(QVariant);
+    void positionChanged(const QVariant&);
+    void timeChanged(const QVariant&);
+    void speedChanged(const QVariant&);
+    void headingChanged(const QVariant&);
     //    void stateChanged(QVariant);
     void avaliblePosition(double, double, double);
 
@@ -108,18 +110,34 @@ private:
     bool quit;
     QStringList m_portList;
 
-    void Decoding(QString);
+    void decoding(QString&, bool, QXmlStreamWriter*);
     //    QString decimalDegreesToDMS(double coord);
     QString DMTODMS(QString );
     //    QString getDM(QString);
     double DMTodecimalDegrees(QString);
     bool bStartRecord;
-    bool bStopAndSave;
+    void itemDecoding(QString&, bool,QXmlStreamWriter*);
+    void record(QString&);
+    QString recordString;
+    QString logFileName;
+
+    bool bXmlStartRecord;
+    bool bXmlStopAndSave;
+    QString xmlFileName;
+    QWidget * widget;
+    QString getCurrentDateTimeString();
+    QXmlStreamReader reader;
+    QList<QPointF> readPointFList;
 public slots:
     void onReadyOpenSerialPort(QVariant);
     void onStartRecordClicked();
     void onStopAndSaveClicked();
+    void onTranslateToXmlClicked();
+    void onXmlStartRecordClicked();
+    void onXmlStopAndSaveClicked();
+    void onSelectXmlFileClicked();
     void onPlayInSimulatorClicked();
+    void onPaintGeometryClicked();
 };
 //! [0]
 

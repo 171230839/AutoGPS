@@ -51,6 +51,11 @@ LayoutItem
         statusBar.currentTime = "Time: " + newTime
     }
 
+    function error(s)
+    {
+        classificationBar.lblClassification += "-----" + s;
+    }
+
     //    function updateBasemapList(newList)
     //    {
     //        btnBasemaps.scrollList = newList

@@ -37,6 +37,8 @@ void MapController::onMapReady()
 {
     isMapReady = true;
     map->addLayer(pointsLayer);
+    map->grid().setType(GridType::Mgrs);
+    map->grid().setVisible(false);
     qDebug()<<"minScale"<<map->minScale();
     qDebug()<<"maxScale"<<map->maxScale();
     qDebug()<<"scale"<<map->scale();
@@ -74,7 +76,7 @@ void MapController::handleToggleFollowMe(bool state)
 
 void MapController::handleZoomIn()
 {
-//    map->zoom(0.5);
+    //    map->zoom(0.5);
     map->setScale(map->scale() / 2);
     qDebug()<<"map  scaled zoomin"<<map->scale();
     if (map->scale() < 100)
@@ -100,7 +102,7 @@ void MapController::handleZoomIn()
 
 void MapController::handleZoomOut()
 {
-//    map->zoom(2);
+    //    map->zoom(2);
     map->setScale(map->scale() *  2);
     if (map->scale() >= 100)
     {
@@ -163,7 +165,7 @@ void MapController::handleResetMap()
 
 void MapController::onAvaliblePosition(double lat, double lon, double heading)
 {
-//    qDebug()<<"onAvaliblePosition"<<lat<<lon<<heading;
+    //    qDebug()<<"onAvaliblePosition"<<lat<<lon<<heading;
     if (!isMapReady ||  mapGraphicsView == 0)
         return;
     Point mapPoint = GeometryEngine::project(lon, lat, map->spatialReference());
@@ -188,7 +190,7 @@ void MapController::onAvaliblePosition(double lat, double lon, double heading)
     drawingOverlay->setVisible(showOwnship);
     if (showOwnship)
     {
-//                qDebug()<<"on showOwnship";
+        //                qDebug()<<"on showOwnship";
         drawingOverlay->setPosition(mapPoint);
         drawingOverlay->setAngle(heading);
     }
@@ -449,30 +451,253 @@ void MapController::handleUnSelectClicked()
 
 void MapController::onMouseWheel(QWheelEvent e)
 {
-    if (map->scale() < 100)
+    if (e.delta() > 0)
     {
-        if (bTiledLayerVisible)
+        if (map->scale() <= 100)
         {
-            QStringList layerNames = map->layerNames();
-            if (layerNames.contains("tiledLayer"))
+            if (bTiledLayerVisible)
             {
-                Layer layer = map->layer("tiledLayer");
-                layer.setVisible(false);
+                QStringList layerNames = map->layerNames();
+                if (layerNames.contains("tiledLayer"))
+                {
+                    Layer layer = map->layer("tiledLayer");
+                    layer.setVisible(false);
+                }
+                bTiledLayerVisible = false;
             }
-            bTiledLayerVisible = false;
         }
     }
-    else if  (map->scale() >= 100)
+    else
     {
-        if (!bTiledLayerVisible)
+        if  (map->scale() >100)
         {
-            QStringList layerNames = map->layerNames();
-            if (layerNames.contains("tiledLayer"))
+            if (!bTiledLayerVisible)
             {
-                Layer layer = map->layer("tiledLayer");
-                layer.setVisible(true);
+                QStringList layerNames = map->layerNames();
+                if (layerNames.contains("tiledLayer"))
+                {
+                    Layer layer = map->layer("tiledLayer");
+                    layer.setVisible(true);
+                }
+                bTiledLayerVisible = true;
             }
-            bTiledLayerVisible = true;
         }
+    }
+
+
+}
+
+void MapController::onPaintGeometry(const QList<QPointF> &pointFList)
+{
+    qDebug()<<"onPaintGeometry"<<pointFList.size();
+    if (pointFList.size() == 0)
+        return;
+
+    map->removeAll();
+    map->grid().setVisible(true);
+    map->addLayer(paintLayer);
+    QList<Point> pointList;
+    foreach(QPointF pointF, pointFList)
+    {
+
+        Point mapPoint = GeometryEngine::project(pointF.y(), pointF.x(), map->spatialReference());
+        pointList.append(mapPoint);
+        SimpleMarkerSymbol smsSymbol(Qt::red, 5, SimpleMarkerSymbolStyle::Circle);
+        Graphic graphic(mapPoint, smsSymbol);
+        paintLayer.addGraphic(graphic);
+
+    }
+    map->panTo(pointList.first());
+    map->setScale(100);
+
+    QList<QList<EsriRuntimeQt::Point> > tmpList;
+    tmpList.append(pointList);
+    EsriRuntimeQt::Polyline line1(tmpList);
+    EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(0,0,255), 3);
+    EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
+    paintLayer.addGraphic(graphic1);
+
+    Point point = pointList.at(0);
+    qDebug()<<QString("foreach lat: %1 lon: %2").arg(point.x(), 0, 'g', 11).arg(point.y(), 0, 'g', 12);
+    QStringList mgrsList = pointListToMGRS(pointList);
+    qDebug()<<"mgrsList size"<<mgrsList.size();
+    qDebug()<<"1"<<mgrsList.at(0);
+    qDebug()<<"level"<<map->grid().levelCount();
+    QStringList newMgrsList;
+    foreach (QString str, mgrsList)
+    {
+        if (!newMgrsList.contains(str))
+        {
+            newMgrsList.append(str);
+        }
+    }
+    qDebug()<<"newMgrsList size"<<newMgrsList.size();
+    foreach(QString str, newMgrsList)
+    {
+        paintMgrsGrid(str);
+    }
+}
+
+QStringList MapController::pointListToMGRS(const QList<Point> &pointList)
+{
+    QStringList returnMgrsList;
+
+    if (!isMapReady) // no SR until map ready
+        return returnMgrsList;
+
+    SpatialReference sr = map->spatialReference();
+    if (sr.id() < 0)
+    {
+        qDebug() << "FAIL: No SR in mapPointToMGRS";
+        return returnMgrsList;
+    }
+
+    const MgrsConversionMode method = MgrsConversionMode::Automatic;
+    const int digits = 3;
+    QStringList mgrsList = sr.toMilitaryGrid(method, digits, false, true, pointList);
+
+    return mgrsList;
+}
+
+void MapController:: paintMgrsGrid(QString & mgrs)
+{
+    QStringList list = mgrs.split(' ', QString::SkipEmptyParts);
+    qDebug()<<"list size"<<list.size();
+    if (list.size() != 4)
+        return;
+    QString slon = list.at(2) + "00";
+    QString slat = list.at(3) + "00";
+    mgrs.replace(list.at(2), slon);
+    mgrs.replace(list.at(3), slat);
+    qDebug()<<"mgrs"<<mgrs;
+    int ilon = slon.toInt();
+    int ilat = slat.toInt();
+    QStringList latBottomList;
+    QStringList latTopList;
+    QStringList lonLeftList;
+    QStringList lonRightList;
+    for (int i = 2; i < 100; i = i + 2)
+    {
+        int lon = ilon + i;
+        QString newLon = QString::number(lon);
+        QString lontemp = mgrs;
+        lontemp.replace(slon, newLon);
+        latBottomList.append(lontemp);
+        int lat = ilat + i;
+        QString newLat = QString::number(lat);
+        QString lattemp = mgrs;
+        lattemp.replace(slat, newLat);
+        lonLeftList.append(lattemp);
+    }
+    QString rightBottomMgrs = mgrs;
+    QString rightBottomLon = QString::number(slon.toInt() + 100);
+    rightBottomMgrs.replace(slon, rightBottomLon);
+    for (int i = 2; i < 100; i = i + 2)
+    {
+        int lat = ilat + i;
+        QString newLat = QString::number(lat);
+        QString lattemp = rightBottomMgrs;
+        lattemp.replace(slat, newLat);
+        lonRightList.append(lattemp);
+    }
+    qDebug()<<"rightBottomMgrs"<<rightBottomMgrs;
+    QString leftTopMgrs = mgrs;
+    QString leftTopLat = QString::number(slat.toInt() + 100);
+    leftTopMgrs.replace(slat, leftTopLat);
+    for (int i = 2; i < 100; i = i + 2)
+    {
+        int lon = ilon  + i;
+        QString newLon = QString::number(lon);
+        QString lontemp = leftTopMgrs;
+        lontemp.replace(slon, newLon);
+        latTopList.append(lontemp);
+    }
+    qDebug()<<"leftTopMgrs"<<leftTopMgrs;
+    mgrsListToLines(latBottomList, latTopList);
+    mgrsListToLines(lonLeftList, lonRightList);
+
+//    QString rightTopMgrs = mgrs;
+//    QString rightTopLat = QString::number(slat.toInt() + 100);
+//    QString rightTopLon = QString::number(slon.toInt() + 100);
+//    rightTopMgrs.replace(slat, rightTopLat);
+//    rightTopMgrs.replace(slon, rightTopLon);
+//    qDebug()<<"rightTopMgrs"<<rightTopMgrs;
+
+
+//    QStringList mgrsList;
+//    mgrsList.append(mgrs);
+//    mgrsList.append(rightBottomMgrs);
+//    mgrsList.append(rightTopMgrs);
+//    mgrsList.append(leftTopMgrs);
+//    QList<Point> pointList;
+//    foreach(QString mgrs, mgrsList)
+//    {
+//         Point point = MGRSToMapPoint(mgrs);
+//         pointList.append(point);
+//    }
+
+//    paintGridItem(pointList);
+//    qDebug()<<"pointList size"<<pointList.size();
+//    foreach(Point point, pointList)
+//    {
+//        qDebug()<<QString("foreach lat: %1 lon: %2").arg(point.y(), 0, 'g', 11).arg(point.x(), 0, 'g', 12);
+//    }
+
+}
+Point MapController::MGRSToMapPoint(const QString & mgrs)
+{
+    Point returnPoint;
+
+    if (!isMapReady) // no SR until map ready
+        return returnPoint;
+    SpatialReference sr = map->spatialReference();
+    if (sr.id() < 0)
+    {
+        qDebug() << "FAIL: No SR in mapPointToMGRS";
+        return returnPoint;
+    }
+
+    QStringList mgrsList;
+    mgrsList.append(mgrs);
+
+    QList<Point> list = sr.fromMilitaryGrid(mgrsList, MgrsConversionMode::Automatic);
+
+    if (list.size() < 1)
+        return returnPoint;
+    returnPoint = list.at(0);
+    return returnPoint;
+}
+
+//void MapController::paintGridItem(const QList<Point>& pointList)
+//{
+//    Q_ASSERT(pointList.size() == 4);
+//    Point leftBottom = pointList.at(0);
+//    Point rightBottom = pointList.at(1);
+//    Point rightTop = pointList.at(2);
+//    Point leftTop = pointList.at(3);
+//    qDebug()<<"leftBottom lat"<<leftBottom.y()<<"lon"<<leftBottom.x();
+
+//}
+
+void MapController::mgrsListToLines(const QStringList & list1,const QStringList& list2)
+{
+    Q_ASSERT(list1.size() == list2.size());
+    int size = list1.size();
+    qDebug()<<"size"<<size;
+    for (int i = 0; i < size; ++i)
+    {
+        QList<Point> pointList;
+        QString temp1 = list1.at(i);
+        Point point1 = MGRSToMapPoint(temp1);
+        pointList.append(point1);
+        QString temp2 = list2.at(i);
+        Point point2 = MGRSToMapPoint(temp2);
+        pointList.append(point2);
+        QList<QList<EsriRuntimeQt::Point> > tmpList;
+        tmpList.append(pointList);
+        EsriRuntimeQt::Polyline line1(tmpList);
+        EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(0,255,0, 180), 1);
+        EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
+        paintLayer.addGraphic(graphic1);
     }
 }

@@ -29,7 +29,7 @@ class Camera : public QObject
     //    Q_PROPERTY(QStringList descriptionList READ descriptionList )
 public:
     Camera(MapGraphicsView * view, QObject* parent = 0);
-    Q_INVOKABLE QStringList getCameraList();
+    Q_INVOKABLE QStringList getCameraDescriptionList();
     void setGeometry(const QRectF&  );
     void setVisible(bool);
 
@@ -40,17 +40,19 @@ public slots:
     void processCapturedImage(int,QImage);
     void onTimeout();
     void handleCaptureDisplay(bool);
+    void handleCaptureStart(bool);
 private:
     MapGraphicsView* mapGraphicsView;
-    QStringList cameraList;
-//    QStackedWidget* widget;
+    QStringList cameraDescriptionList;
+    //    QStackedWidget* widget;
+    QList<QCamera*> cameraList;
     QGraphicsProxyWidget* proxyWidget;
-      QList<QCameraImageCapture*> cameraImageCaptureList;
-      QMap<int, int> map;
-       QLabel* captureLabel;
-       QStackedWidget * stackedWidget;
-       int currentIndex;
-
+    QList<QCameraImageCapture*> cameraImageCaptureList;
+    QMap<int, int> map;
+    QLabel* captureLabel;
+    QStackedWidget * stackedWidget;
+    int currentIndex;
+    QTimer *timer;
 };
 
 

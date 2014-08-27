@@ -84,19 +84,17 @@ public:
     void init();
 signals:
 
-    void error(const QVariant &s);
-    void timeout(const QString &s);
+    void error( QVariant );
 
-    void positionChanged(const QVariant&);
-    void timeChanged(const QVariant&);
-    void speedChanged(const QVariant&);
-    void headingChanged(const QVariant&);
+
+    void positionChanged(QVariant);
+    void timeChanged(QVariant);
+    void speedChanged(QVariant);
+    void headingChanged(QVariant);
     //    void stateChanged(QVariant);
     void avaliblePosition(double, double, double);
+    void paintGeometry(const QList<QPointF> &);
 
-    //     void portListChanged();
-    //    void qPortNameChanged();
-    //    void qBaudRateChanged();
 private:
     QString portName;
     //    QString request;
@@ -125,14 +123,22 @@ private:
     bool bXmlStopAndSave;
     QString xmlFileName;
     QWidget * widget;
+    QString getCurrentDateString();
+    QString getCurrentTimeString();
     QString getCurrentDateTimeString();
     QXmlStreamReader reader;
-    QList<QPointF> readPointFList;
+    QList<QPointF> pointFList;
+    QStringList timeList;
+    void parseXML(QXmlStreamReader&, QList<QPointF> &, QStringList&);
+    bool bXmlFileSelect;
+    void readLog(QXmlStreamReader& reader, QList<QPointF> &pointFList, QStringList& timeList);
+
 public slots:
     void onReadyOpenSerialPort(QVariant);
     void onStartRecordClicked();
     void onStopAndSaveClicked();
     void onTranslateToXmlClicked();
+    void onSelectLogFileClicked();
     void onXmlStartRecordClicked();
     void onXmlStopAndSaveClicked();
     void onSelectXmlFileClicked();

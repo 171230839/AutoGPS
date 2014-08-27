@@ -70,6 +70,12 @@ private:
     void getBehindPath(int, double);
     bool bTiledLayerVisible;
 //    bool bTiledLayerVisibleGreater;
+    GraphicsLayer paintLayer;
+    QStringList pointListToMGRS(const QList<Point>&);
+    void paintMgrsGrid(QString &);
+    Point MGRSToMapPoint(const QString&);
+//    void paintGridItem(const QList<Point>&);
+    void mgrsListToLines(const QStringList&, const QStringList&);
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);
@@ -99,6 +105,7 @@ public slots:
     void handleGetPathClicked();
     void handleUnSelectClicked();
     void onMouseWheel(QWheelEvent);
+    void onPaintGeometry(const QList<QPointF> &);
 };
 
 #endif // MAPCONTROLLER_H

@@ -1,4 +1,4 @@
-import QtQuick 1.1
+ import QtQuick 1.1
 
 import "CompositeControls"
 import "PanelContainers"
@@ -13,6 +13,7 @@ LayoutItem
     signal zoomOutClicked()
     signal panClicked(string direction)
     signal captureDisplay(bool toggleState)
+    signal captureStart(bool  start)
 
     property string currentItem : "Map"
 
@@ -232,7 +233,7 @@ LayoutItem
         //       anchors.horizontalCenter: parent.horizontalCenter
         anchors.rightMargin: 5
         width: 200
-        scrollList:  cameraObject.getCameraList()
+        scrollList:  cameraObject.getCameraDescriptionList()
         visible: window.currentItem === "Camera"
         Component.onCompleted:
         {
@@ -255,6 +256,23 @@ LayoutItem
         {
             itemClicked.connect(window.captureDisplay);
         }
-        z: 2
+//        z: 2
+    }
+    ToggleButton
+    {
+        id: captureStart
+        buttonDefaultIcon: "../../icons/Nav-Controls-East-Normal.png"
+        buttonActiveIcon: "../../icons/Nav-Controls-East-Pressed.png"
+        anchors.top: cameraScroll.bottom
+        anchors.right: captureButton.left
+        anchors.topMargin: 10
+        anchors.rightMargin: 5
+        visible: window.currentItem === "Camera"
+
+        Component.onCompleted:
+        {
+            itemClicked.connect(window.captureStart);
+        }
+//        z: 2
     }
 }

@@ -6,6 +6,7 @@ Item{
     signal startRecordClicked()
     signal  stopAndSaveClicked()
     signal translateToXmlClicked()
+    signal selectLogFileClicked()
 
     signal xmlStartRecordClicked()
     signal  xmlStopAndSaveClicked()
@@ -39,6 +40,7 @@ Item{
             startRecordClicked.connect(record.startRecordClicked)
             stopAndSaveClicked.connect(record.stopAndSaveClicked)
             translateToXmlClicked.connect(record.translateToXmlClicked)
+            selectLogFileClicked.connect(record.selectLogFileClicked)
         }
     }
     XmlRecordPanel

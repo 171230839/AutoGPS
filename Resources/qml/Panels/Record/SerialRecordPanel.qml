@@ -6,6 +6,7 @@ Panel{
     signal startRecordClicked()
     signal  stopAndSaveClicked()
     signal translateToXmlClicked()
+    signal selectLogFileClicked()
     id: serialRecordPanel
 
     property Panel xmlRecordPanel
@@ -20,6 +21,7 @@ Panel{
 //        ModelObject { text: "Start record"; startEnabled: false; type: "toggle"; Component.onCompleted: modelSignal.connect(geometryPanel.pointsToggled); },
         ModelObject { text: "Start record";  Component.onCompleted: noArgModelSignal.connect(serialRecordPanel.startRecordClicked); },
         ModelObject { text: "Stop and Save"; Component.onCompleted: noArgModelSignal.connect(serialRecordPanel.stopAndSaveClicked);},
+        ModelObject { text: "Select Log File"; Component.onCompleted: noArgModelSignal.connect(serialRecordPanel.selectLogFileClicked);},
         ModelObject { text: "TranslateToXml"; Component.onCompleted: noArgModelSignal.connect(serialRecordPanel.translateToXmlClicked); onNoArgModelSignal: {serialRecordPanel.goBack(); stack.addPanel(xmlRecordPanel)}}
 //        ModelObject { text: "OK"; Component.onCompleted: noArgModelSignal.connect(geometryPanel.okClicked);onNoArgModelSignal: {geometryPanel.goBack(); stack.addPanel(pathsPanel) }}
 ]

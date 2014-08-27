@@ -56,6 +56,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     mapController = new MapController(&map, mapGraphicsView, this);
      camera = new Camera(mapGraphicsView, this);
 
+
     engine = new QDeclarativeEngine(this);
     context = new QDeclarativeContext(engine->rootContext());
     context->setContextProperty("serialPortThread", &thread);
@@ -103,7 +104,9 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(overlayUI, SIGNAL(basemapChanged(QString)), this, SLOT(handleBasemapChanged(QString)));
     connect(overlayUI, SIGNAL(cameraIndexChanged(int)), camera, SLOT(handleCameraIndexChanged(int)));
     connect(overlayUI, SIGNAL(captureDisplay(bool)), camera, SLOT(handleCaptureDisplay(bool)));
+    connect(overlayUI, SIGNAL(captureStart(bool)), camera, SLOT(handleCaptureStart(bool)));
     connect(&thread, SIGNAL(error(QVariant)), overlayUI, SLOT(error(QVariant)));
+    connect(&thread, SIGNAL(paintGeometry(QList<QPointF>)), mapController, SLOT(onPaintGeometry(QList<QPointF>)));
     mainMenuUI = overlayUI->findChild<QObject*>("mainMenu");
     if (mainMenuUI)
     {
@@ -152,7 +155,7 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(record, SIGNAL(startRecordClicked()), &thread, SLOT(onStartRecordClicked()));
         connect(record, SIGNAL(stopAndSaveClicked()), &thread, SLOT(onStopAndSaveClicked()));
         connect(record, SIGNAL(translateToXmlClicked()), &thread, SLOT(onTranslateToXmlClicked()));
-
+        connect(record, SIGNAL(selectLogFileClicked()), &thread, SLOT(onSelectLogFileClicked()));
         connect(record, SIGNAL(xmlStartRecordClicked()), &thread, SLOT(onXmlStartRecordClicked()));
         connect(record, SIGNAL(xmlStopAndSaveClicked()), &thread, SLOT(onXmlStopAndSaveClicked()));
         connect(record, SIGNAL(selectXmlFileClicked()), &thread, SLOT(onSelectXmlFileClicked()));

@@ -13,6 +13,7 @@ class Point;
 class MapGraphicsView;
 class Map;
 class GraphicsLayer;
+class Line;
 }
 class MapController : public QObject
 {
@@ -57,17 +58,17 @@ private:
 
     qint64 graphicId;
 
-    void preparePaths();
+    void preparePaths(const QList<Point>&);
     static const  int WGS84 = 4326;
 
-    bool bSelectPoint;
+    bool bSelectPoints;
     QList<Point> wgsList;
     QList<double> distanceList;
     QList<double> azimuthList;
-    qint64 getSelectedGraphicId();
+//    qint64 getSelectedGraphicId();
     void getPath(int);
-    void getFrontPath(int, double);
-    void getBehindPath(int, double);
+    void getFrontPath(int, double, double);
+    void getBehindPath(int, double, double);
     bool bTiledLayerVisible;
 //    bool bTiledLayerVisibleGreater;
     GraphicsLayer paintLayer;
@@ -76,6 +77,11 @@ private:
     Point MGRSToMapPoint(const QString&);
 //    void paintGridItem(const QList<Point>&);
     void mgrsListToLines(const QStringList&, const QStringList&);
+    qint64 cropLandGraphicId;
+    bool bSelectStartPoint;
+    QList<Point> cropLandPointList;
+    Point startPoint;
+
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);
@@ -97,15 +103,34 @@ public slots:
     void onAvaliblePosition(double, double, double);
     void handlePointsToggled(bool);
     void handleToLinesClicked();
-    void handleOkClicked();
+//    void handleOkClicked();
     void handleToPolygonClicked();
     void onClearClicked();
     void mousePress(QMouseEvent);
-    void handleSelectPointToggled(bool);
+    void handleSelectPointsToggled(bool);
     void handleGetPathClicked();
+    void handlePaintCropLandClicked();
     void handleUnSelectClicked();
     void onMouseWheel(QWheelEvent);
     void onPaintGeometry(const QList<QPointF> &);
+    void handleSelectStartPointClicked();
+};
+
+class MyCoordinate
+{
+public:
+    MyCoordinate(const Point& origin, const Point& horizontal);
+
+    Point mapPointToMyCoordinate(const Point& );
+    QList<Point> mapPointsToMyCoordinate(const QList<Point>&);
+      QList<Line> pointListToLines(const QList<Point> &);
+    QList<Point> getPointListFromLines(const QList<Line>& lineList);
+    QList<Point> getPointListFromLine(const Line & line);
+private:
+    Point origin;
+    Point horizontal;
+   double horAngle;
+
 };
 
 #endif // MAPCONTROLLER_H

@@ -108,4 +108,6 @@ OTHER_FILES += \
     Resources/qml/PanelContainers/Record.qml \
     Resources/qml/Panels/Record/RecordPanel.qml \
     Resources/qml/Panels/Record/SerialRecordPanel.qml \
-    Resources/qml/Panels/Record/XmlRecordPanel.qml
+    Resources/qml/Panels/Record/XmlRecordPanel.qml \
+    Resources/qml/Panels/Record/CropLandPanel.qml \
+    Resources/qml/Panels/Record/RoutePanel.qml

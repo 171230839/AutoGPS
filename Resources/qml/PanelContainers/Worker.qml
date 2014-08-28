@@ -15,7 +15,7 @@ Item{
         stack: worker.stack
          anchors.fill: parent
         geometryPanel: geometryPanel
-        pathsPanel: pathsPanel
+//        pathsPanel: pathsPanel
     }
 
     GeometryPanel
@@ -23,14 +23,14 @@ Item{
         id: geometryPanel
         stack: worker.stack
          anchors.fill: parent
-         pathsPanel: pathsPanel
+//         pathsPanel: pathsPanel
     }
 
-    PathsPanel
-    {
-        id: pathsPanel
-        stack: worker.stack
-        anchors.fill:parent
-    }
+//    PathsPanel
+//    {
+//        id: pathsPanel
+//        stack: worker.stack
+//        anchors.fill:parent
+//    }
 
 }

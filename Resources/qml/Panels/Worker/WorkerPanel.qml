@@ -5,7 +5,7 @@ Panel{
 
     property Stack stack
     property Panel geometryPanel
-    property Panel pathsPanel
+//    property Panel pathsPanel
     id: workerPanel
     objectName: "workerPanel"
     title: "Start Work"
@@ -13,8 +13,8 @@ Panel{
     onGoBack: stack.removePanel()
     delegate: MultiDelegate{}
     model:[
-        ModelObject { text: "get Geometry "; onNoArgModelSignal: { stack.addPanel(geometryPanel)}},
-        ModelObject { text: "get Paths"; onNoArgModelSignal: { stack.addPanel(pathsPanel)}}
+        ModelObject { text: "get Geometry "; onNoArgModelSignal: { stack.addPanel(geometryPanel)}}
+//        ModelObject { text: "get Paths"; onNoArgModelSignal: { stack.addPanel(pathsPanel)}}
     ]
 
 

@@ -11,8 +11,14 @@ Item{
     signal xmlStartRecordClicked()
     signal  xmlStopAndSaveClicked()
     signal selectXmlFileClicked()
-    signal playInSimulatorClicked()
+//    signal playInSimulatorClicked()
     signal paintGeometryClicked()
+
+    signal selectPointsToggled(bool state)
+    signal paintCropLandClicked()
+    signal unSelectClicked()
+    signal selectStartPointClicked()
+    signal getPathClicked()
     property Panel panel
     property Stack stack
 
@@ -48,13 +54,36 @@ Item{
         id: xmlRecordPanel
         stack: record.stack
         anchors.fill:  parent
+        cropLandPanel:  cropLandPanel
+        routePanel:  routePanel
         Component.onCompleted:
         {
             xmlStartRecordClicked.connect(record.xmlStartRecordClicked)
             xmlStopAndSaveClicked.connect(record.xmlStopAndSaveClicked)
             selectXmlFileClicked.connect(record.selectXmlFileClicked)
-            playInSimulatorClicked.connect(record.playInSimulatorClicked)
+//            playInSimulatorClicked.connect(record.playInSimulatorClicked)
             paintGeometryClicked.connect(record.paintGeometryClicked)
         }
+    }
+
+    CropLandPanel
+    {
+        id: cropLandPanel
+        stack: record.stack
+        anchors.fill:  parent
+        Component.onCompleted:
+        {
+            selectPointsToggled.connect(record.selectPointsToggled)
+            paintCropLandClicked.connect(record.paintCropLandClicked)
+            unSelectClicked.connect(record.unSelectClicked)
+            selectStartPointClicked.connect(record.selectStartPointClicked)
+            getPathClicked.connect(record.getPathClicked)
+        }
+    }
+    RoutePanel
+    {
+        id: routePanel
+        stack: record.stack
+        anchors.fill:  parent
     }
 }

@@ -6,8 +6,9 @@
 #include <SimpleFillSymbol.h>
 #include <MapGraphicsView.h>
 #include <Map.h>
+#include <Line.h>
 
-
+const   double   PI   =   3.141592653589793;
 static const double  carWidth = 2.0;
 
 MapController::MapController(Map* inputMap,
@@ -23,8 +24,10 @@ MapController::MapController(Map* inputMap,
     bPoints(false),
     readyPointList(false),
     graphicId(0),
-    bSelectPoint(false),
-    bTiledLayerVisible(true)
+    bSelectPoints(false),
+    bTiledLayerVisible(true),
+    cropLandGraphicId(0),
+    bSelectStartPoint(false)
 {
 }
 
@@ -42,7 +45,7 @@ void MapController::onMapReady()
     qDebug()<<"minScale"<<map->minScale();
     qDebug()<<"maxScale"<<map->maxScale();
     qDebug()<<"scale"<<map->scale();
-
+    qDebug()<<"map referce"<<map->spatialReference().toJson();
     map->setScale(6010.79);
 }
 
@@ -245,24 +248,23 @@ void MapController::handleToLinesClicked()
     }
 }
 
-void MapController::handleOkClicked()
-{
-    qDebug()<<"handleOkClicked()";
-    if (bPoints&& (graphicId != 0))
-    {
-        pointsLayer.removeGraphic(graphicId);
-        pointList.pop_back();
-        bPoints = false;
-    }
-    //    map->removeLayer("tiledLayer");
-    if (!readyPointList)
-    {
-        pointList.append(pointList.first());
-        readyPointList = true;
-    }
-    preparePaths();
-
-}
+//void MapController::handleOkClicked()
+//{
+//    qDebug()<<"handleOkClicked()";
+//    if (bPoints&& (graphicId != 0))
+//    {
+//        pointsLayer.removeGraphic(graphicId);
+//        pointList.pop_back();
+//        bPoints = false;
+//    }
+//    //    map->removeLayer("tiledLayer");
+//    if (!readyPointList)
+//    {
+//        pointList.append(pointList.first());
+//        readyPointList = true;
+//    }
+//    preparePaths();
+//}
 
 void MapController::handleToPolygonClicked()
 {
@@ -306,18 +308,38 @@ void MapController::mousePress(QMouseEvent mouseEvent)
         graphicId = pointsLayer.addGraphic(mouseClickGraphic);
         return;
     }
-    if (bSelectPoint)
+    if (bSelectPoints)
     {
-        QList<qint64> hitGraphicIDs = pointsLayer.graphicIds(mousePoint.x(), mousePoint.y(), 3);
-        if (hitGraphicIDs.length() > 0)
+        QList<qint64> hitGraphicIDs = paintLayer.graphicIds(mousePoint.x(), mousePoint.y(), 3);
+
+        foreach( qint64 id, hitGraphicIDs)
         {
-            pointsLayer.clearSelection();
-            pointsLayer.select(hitGraphicIDs.at(0));
-            return;
+            Graphic graphic = paintLayer.graphic(id);
+            Geometry geometry = graphic.geometry();
+            if (Geometry::isPoint(geometry.type()))
+            {
+                paintLayer.select(id);
+                startPoint = geometry;
+                return;
+            }
         }
-
     }
+    if (bSelectStartPoint)
+    {
+        QList<qint64> hitGraphicIDs = paintLayer.graphicIds(mousePoint.x(), mousePoint.y(), 3);
 
+        foreach( qint64 id, hitGraphicIDs)
+        {
+            Graphic graphic = paintLayer.graphic(id);
+            Geometry geometry = graphic.geometry();
+            if (Geometry::isPoint(geometry.type()))
+            {
+                paintLayer.clearSelection();
+                paintLayer.select(id);
+                return;
+            }
+        }
+    }
 }
 
 
@@ -329,7 +351,7 @@ void MapController::onClearClicked()
     readyPointList = false;
 }
 
-void MapController::preparePaths()
+void MapController::preparePaths(const QList<Point> &pointList)
 {
     qDebug()<<"preparePaths-size:"<<pointList.size();
 
@@ -339,7 +361,7 @@ void MapController::preparePaths()
         qDebug()<<QString("firstP x: %1 y: %2").arg(temp.x(), 0, 'g', 14).arg(temp.y(), 0, 'g', 14);
         wgsList.append(temp);
     }
-
+    wgsList.append(wgsList.first());
     for (int i = 1; i < wgsList.size(); ++i)
     {
         GeodesicDistanceResult  distance = GeometryEngine::geodesicDistanceBetweenPoints(wgsList.at(i - 1), wgsList.at(i), WGS84);
@@ -347,56 +369,64 @@ void MapController::preparePaths()
         distanceList.append(distance.distance());
         azimuthList.append(distance.azimuthFrom1To2());
     }
-    pointList.pop_back();
     wgsList.pop_back();
 }
 
 
-void MapController::handleSelectPointToggled(bool state)
+void MapController::handleSelectPointsToggled(bool state)
 {
-    bSelectPoint = state;
+    bSelectPoints = state;
+}
+
+void MapController::handlePaintCropLandClicked()
+{
+    QList<qint64> selectGraphicsId = paintLayer.selectionIds();
+    cropLandPointList.clear();
+    foreach( qint64 id, selectGraphicsId)
+    {
+        Graphic graphic = paintLayer.graphic(id);
+        Geometry geometry = graphic.geometry();
+        if (!Geometry::isPoint(geometry.type()))
+            return;
+        Point point = geometry;
+        cropLandPointList.append(point);
+    }
+    if (cropLandPointList.isEmpty())
+        return;
+    //    pointList.append(pointList.first());
+    QList<QList<EsriRuntimeQt::Point> > tmpList;
+    tmpList.append(cropLandPointList);
+    EsriRuntimeQt::Polygon polygon(tmpList);
+    cropLandGraphicId = paintLayer.addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor(0, 180, 0, 200))));
 }
 
 void MapController::handleGetPathClicked()
 {
-    qint64 graphicID = getSelectedGraphicId();
-    if (graphicID != -1)
+    qDebug()<<"handleGetPathClicked()"<<cropLandPointList.size();
+
+    if (startPoint.isEmpty())
+        return;
+    if (cropLandPointList.size() < 2)
+        return;
+
+    int order = cropLandPointList.indexOf(startPoint);
+    qDebug()<<"start Point x"<<startPoint.x()<<" Y:"<<startPoint.y();
+    qDebug()<<"order"<<order;
+    if (order != -1)
     {
-        Graphic graphic = pointsLayer.graphic(graphicID);
-        Geometry geometry = graphic.geometry();
-        if (!Geometry::isPoint(geometry.type()))
-            return;
-        Point gPoint = geometry;
-        int order = -1;
-        for (int i = 0; i < pointList.size(); ++i)
-        {
-            if (gPoint == pointList.at(i))
-            {
-                order = i;
-            }
-        }
+        preparePaths(cropLandPointList);
         getPath(order);
     }
 }
 
-qint64 MapController::getSelectedGraphicId()
-{
-    QList<qint64> hitGraphicIDs = pointsLayer.graphicIds();
 
-    for (int i = 0; i < hitGraphicIDs.length(); i++)
-    {
-        if (pointsLayer.isGraphicSelected(hitGraphicIDs.at(i)))
-            return hitGraphicIDs.at(i);
-    }
-    return -1;
-}
 
 void MapController::getPath(int order)
 {
     if (order < 0)
         return;
     //    boolcompareDistance(order);
-    int index = wgsList.size() - 1;
+    int index = cropLandPointList.size();
     qDebug()<<"order:"<<order;
     qDebug()<<"index:"<<index;
     double behindDistance ;
@@ -418,35 +448,108 @@ void MapController::getPath(int order)
         frontDistance = distanceList.at(order -1);
         frontAngle = azimuthList.at(order - 1);
     }
+
     qDebug()<<"behindD"<<behindDistance;
     qDebug()<<"frontD"<<frontDistance;
+
     if (behindDistance <= frontDistance)
     {
-        getFrontPath(order, frontAngle);
+//        getFrontPath(order, behindAngle, frontAngle);
+        Point x;
+        if (order == 0)
+        {
+            x = cropLandPointList.back();
+        }
+        else
+        {
+            x = cropLandPointList.at(order);
+        }
+        MyCoordinate coor(startPoint, x);
+        QList<Point> pointList = coor.mapPointsToMyCoordinate(cropLandPointList);
+
     }
     else
-        getBehindPath(order, behindAngle);
+    {
+        //    getBehindPath(order, behindAngle, frontAngle);
+        Point x;
+        if (order == index)
+        {
+            x = cropLandPointList.first();
+        }
+        else
+        {
+            x = cropLandPointList.at(order + 1);
+        }
+        MyCoordinate coor(startPoint, x);
+//        coor.paintGrid();
+        QList<Point> pointList = coor.mapPointsToMyCoordinate(cropLandPointList);
+        QList<Line> lineList = coor.pointListToLines(pointList);
+        QList<Point> getList = coor.getPointListFromLines(lineList);
+//        QList<Point> getList;
+//        foreach( Line line, lineList)
+//        {
+//            QList<Point> tempList = coor.getPointsFromLine(line);
+//            getList.append(tempList);
+//        }
+
+    }
+
 }
 
-void MapController::getFrontPath(int order, double frontAngle)
+void MapController::getFrontPath(int order, double frontAngle, double)
 {
     qDebug()<<"getFrontPath frontAngle:"<<frontAngle;
 }
 
-void MapController::getBehindPath(int order, double behindAngle)
+void MapController::getBehindPath(int order, double behindAngle, double frontAngle)
 {
-    qDebug()<<"getBehindPath behindAngle: " << behindAngle;
-    if ( (0 < behindAngle) && ( behindAngle <= 90))
+    qDebug()<<"getBehindPath behindAngle: " << behindAngle<< "frontAngle"<<frontAngle;
+    double angle = 0;
+    if ((behindAngle * frontAngle) > 0)
     {
-        double y = asin(behindAngle) * carWidth;
-        qDebug()<<"y:"<<y;
+        angle = abs(behindAngle - frontAngle);
+    }
+    else
+    {
+        if ((abs(behindAngle) + abs(frontAngle)) > 180)
+        {
+            angle = abs(behindAngle) + abs(frontAngle) - 180;
+        }
+        else
+        {
+            angle = 180 - abs(behindAngle) - abs(frontAngle);
+        }
+    }
+    qDebug()<<"angle"<<angle;
+    double degree = angle * PI / 180;
+    qDebug()<<"degree"<<degree;
+    double l = asin(degree) * carWidth;
+    qDebug()<<"l"<<l;
+    double x = l * sin(frontAngle);
+    double y = l * cos(frontAngle);
+    Point point = cropLandPointList.at(order);
+    qDebug()<<"point x"<<point.x() << " y:"<<point.y();
+    Point nextPoint = cropLandPointList.at(order + 1);
+    qDebug()<<"x:"<<x<<" y:"<<y;
+    QList<Point> pointList;
+    int times = abs((nextPoint.x() - point.x()) / x);
+    for (int i = 0; i < times; ++i)
+    {
+        Point temp;
+        temp.setX(point.x() - i * x);
+        temp.setY(point.y() - i * y);
+        pointList.append(temp);
     }
 
 }
 
 void MapController::handleUnSelectClicked()
 {
-    pointsLayer.clearSelection();
+    paintLayer.clearSelection();
+    if (cropLandGraphicId)
+    {
+        paintLayer.removeGraphic(cropLandGraphicId);
+    }
 }
 
 void MapController::onMouseWheel(QWheelEvent e)
@@ -517,12 +620,10 @@ void MapController::onPaintGeometry(const QList<QPointF> &pointFList)
     EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
     paintLayer.addGraphic(graphic1);
 
-    Point point = pointList.at(0);
-    qDebug()<<QString("foreach lat: %1 lon: %2").arg(point.x(), 0, 'g', 11).arg(point.y(), 0, 'g', 12);
+    //    Point point = pointList.at(0);
+    //    qDebug()<<QString("foreach lat: %1 lon: %2").arg(point.x(), 0, 'g', 11).arg(point.y(), 0, 'g', 12);
     QStringList mgrsList = pointListToMGRS(pointList);
-    qDebug()<<"mgrsList size"<<mgrsList.size();
-    qDebug()<<"1"<<mgrsList.at(0);
-    qDebug()<<"level"<<map->grid().levelCount();
+
     QStringList newMgrsList;
     foreach (QString str, mgrsList)
     {
@@ -531,7 +632,7 @@ void MapController::onPaintGeometry(const QList<QPointF> &pointFList)
             newMgrsList.append(str);
         }
     }
-    qDebug()<<"newMgrsList size"<<newMgrsList.size();
+    //    qDebug()<<"newMgrsList size"<<newMgrsList.size();
     foreach(QString str, newMgrsList)
     {
         paintMgrsGrid(str);
@@ -562,14 +663,12 @@ QStringList MapController::pointListToMGRS(const QList<Point> &pointList)
 void MapController:: paintMgrsGrid(QString & mgrs)
 {
     QStringList list = mgrs.split(' ', QString::SkipEmptyParts);
-    qDebug()<<"list size"<<list.size();
     if (list.size() != 4)
         return;
     QString slon = list.at(2) + "00";
     QString slat = list.at(3) + "00";
     mgrs.replace(list.at(2), slon);
     mgrs.replace(list.at(3), slat);
-    qDebug()<<"mgrs"<<mgrs;
     int ilon = slon.toInt();
     int ilat = slat.toInt();
     QStringList latBottomList;
@@ -600,7 +699,7 @@ void MapController:: paintMgrsGrid(QString & mgrs)
         lattemp.replace(slat, newLat);
         lonRightList.append(lattemp);
     }
-    qDebug()<<"rightBottomMgrs"<<rightBottomMgrs;
+    //    qDebug()<<"rightBottomMgrs"<<rightBottomMgrs;
     QString leftTopMgrs = mgrs;
     QString leftTopLat = QString::number(slat.toInt() + 100);
     leftTopMgrs.replace(slat, leftTopLat);
@@ -612,37 +711,9 @@ void MapController:: paintMgrsGrid(QString & mgrs)
         lontemp.replace(slon, newLon);
         latTopList.append(lontemp);
     }
-    qDebug()<<"leftTopMgrs"<<leftTopMgrs;
+    //    qDebug()<<"leftTopMgrs"<<leftTopMgrs;
     mgrsListToLines(latBottomList, latTopList);
     mgrsListToLines(lonLeftList, lonRightList);
-
-//    QString rightTopMgrs = mgrs;
-//    QString rightTopLat = QString::number(slat.toInt() + 100);
-//    QString rightTopLon = QString::number(slon.toInt() + 100);
-//    rightTopMgrs.replace(slat, rightTopLat);
-//    rightTopMgrs.replace(slon, rightTopLon);
-//    qDebug()<<"rightTopMgrs"<<rightTopMgrs;
-
-
-//    QStringList mgrsList;
-//    mgrsList.append(mgrs);
-//    mgrsList.append(rightBottomMgrs);
-//    mgrsList.append(rightTopMgrs);
-//    mgrsList.append(leftTopMgrs);
-//    QList<Point> pointList;
-//    foreach(QString mgrs, mgrsList)
-//    {
-//         Point point = MGRSToMapPoint(mgrs);
-//         pointList.append(point);
-//    }
-
-//    paintGridItem(pointList);
-//    qDebug()<<"pointList size"<<pointList.size();
-//    foreach(Point point, pointList)
-//    {
-//        qDebug()<<QString("foreach lat: %1 lon: %2").arg(point.y(), 0, 'g', 11).arg(point.x(), 0, 'g', 12);
-//    }
-
 }
 Point MapController::MGRSToMapPoint(const QString & mgrs)
 {
@@ -668,22 +739,12 @@ Point MapController::MGRSToMapPoint(const QString & mgrs)
     return returnPoint;
 }
 
-//void MapController::paintGridItem(const QList<Point>& pointList)
-//{
-//    Q_ASSERT(pointList.size() == 4);
-//    Point leftBottom = pointList.at(0);
-//    Point rightBottom = pointList.at(1);
-//    Point rightTop = pointList.at(2);
-//    Point leftTop = pointList.at(3);
-//    qDebug()<<"leftBottom lat"<<leftBottom.y()<<"lon"<<leftBottom.x();
-
-//}
-
 void MapController::mgrsListToLines(const QStringList & list1,const QStringList& list2)
 {
     Q_ASSERT(list1.size() == list2.size());
     int size = list1.size();
-    qDebug()<<"size"<<size;
+    //    qDebug()<<"size"<<size;
+    QList<QList<EsriRuntimeQt::Point> > tmpList;
     for (int i = 0; i < size; ++i)
     {
         QList<Point> pointList;
@@ -693,11 +754,101 @@ void MapController::mgrsListToLines(const QStringList & list1,const QStringList&
         QString temp2 = list2.at(i);
         Point point2 = MGRSToMapPoint(temp2);
         pointList.append(point2);
-        QList<QList<EsriRuntimeQt::Point> > tmpList;
+
         tmpList.append(pointList);
-        EsriRuntimeQt::Polyline line1(tmpList);
-        EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(0,255,0, 180), 1);
-        EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
-        paintLayer.addGraphic(graphic1);
+
     }
+    EsriRuntimeQt::Polyline line1(tmpList);
+    EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(0,255,0, 180), 1);
+    EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
+    paintLayer.addGraphic(graphic1);
+}
+
+void MapController::handleSelectStartPointClicked()
+{
+    qDebug()<<"handleSelectStartPointClicked()";
+
+    this->bSelectPoints = false;
+    this->bSelectStartPoint = true;
+    paintLayer.clearSelection();
+}
+
+MyCoordinate::MyCoordinate(const Point& origin, const Point &horizontal)
+    :origin(origin),
+      horizontal(horizontal)
+{
+
+    Point temp;
+    temp.setX(horizontal.x() - origin.x());
+    temp.setY(horizontal.y() - origin.y());
+    horAngle = atan(temp.y() / temp.x());
+}
+
+Point MyCoordinate::mapPointToMyCoordinate(const Point& point)
+{
+    Point returnPoint;
+    Point temp;
+    temp.setX(point.x() - origin.x());
+    temp.setY(point.y() - origin.y());
+    double angle = atan(temp.y() / temp.x());
+    qDebug()<<"angle"<<angle;
+    double newAngle = angle - horAngle;
+    qDebug()<<"horAngle"<<horAngle;
+    qDebug()<<"newAngle"<<newAngle;
+//    double length = temp.calculateLength2D();
+    Line line;
+    line.setStart(Point(0,0));
+    line.setEnd(temp);
+    double length = line.calculateLength2D();
+    qDebug()<<"length"<<length;
+    returnPoint.setY(length * sin(newAngle));
+    returnPoint.setX(length * cos(newAngle));
+    return returnPoint;
+}
+
+QList<Point>  MyCoordinate::mapPointsToMyCoordinate(const QList<Point>& pointList)
+{
+    QList<Point> returnPointList;
+    foreach (Point point, pointList)
+    {
+        Point temp = mapPointToMyCoordinate(point);
+        returnPointList.append(temp);
+    }
+
+    return returnPointList;
+}
+
+QList<Line> MyCoordinate::pointListToLines(const QList<Point> &pointList)
+{
+    QList<Line> returnLineList;
+    for (int i = 1; i < pointList.size(); ++i)
+    {
+        Line line;
+        line.setStart(pointList.at(i-1));
+        if (i != (pointList.size() - 1))
+        {
+            line.setEnd(pointList.at(i));
+        }
+        else
+            line.setEnd(pointList.first());
+       returnLineList.append(line);
+    }
+    return returnLineList;
+}
+
+QList<Point> MyCoordinate::getPointListFromLines(const QList<Line>& lineList)
+{
+    QList<Point> returnPointList;
+    foreach (Line line, lineList)
+    {
+        QList<Point> list = getPointListFromLine(line);
+        returnPointList.append(list);
+    }
+    return returnPointList;
+}
+
+QList<Point> MyCoordinate::getPointListFromLine(const Line & line)
+{
+    QList<Point> returnPointList;
+    return returnPointList;
 }

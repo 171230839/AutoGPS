@@ -131,7 +131,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     {
         connect(geometryPanel, SIGNAL(pointsToggled(bool)), mapController, SLOT(handlePointsToggled(bool)));
         connect(geometryPanel, SIGNAL(toLinesClicked()), mapController, SLOT(handleToLinesClicked()));
-        connect(geometryPanel, SIGNAL(okClicked()), mapController, SLOT(handleOkClicked()));
+//        connect(geometryPanel, SIGNAL(okClicked()), mapController, SLOT(handleOkClicked()));
         connect(geometryPanel, SIGNAL(toPolygonClicked()), mapController, SLOT(handleToPolygonClicked()));
         connect(geometryPanel, SIGNAL(clearClicked()), mapController, SLOT(onClearClicked()));
     }
@@ -141,13 +141,13 @@ AutoGPS::AutoGPS (QWidget *parent):
     {
         //        connect(workerPanel, SIGNAL(selectPointToggled(bool)), mapController, SLOT(handleSelectPointToggled(bool)));
     }
-    QObject *pathsPanel = overlayUI->findChild<QObject*>("pathsPanel");
-    if (pathsPanel)
-    {
-        connect(pathsPanel, SIGNAL(selectPointToggled(bool)), mapController, SLOT(handleSelectPointToggled(bool)));
-        connect(pathsPanel, SIGNAL(getPathClicked()), mapController, SLOT(handleGetPathClicked()));
-        connect(pathsPanel, SIGNAL(unSelectClicked()), mapController, SLOT(handleUnSelectClicked()));
-    }
+//    QObject *pathsPanel = overlayUI->findChild<QObject*>("pathsPanel");
+//    if (pathsPanel)
+//    {
+//        connect(pathsPanel, SIGNAL(selectPointToggled(bool)), mapController, SLOT(handleSelectPointToggled(bool)));
+//        connect(pathsPanel, SIGNAL(getPathClicked()), mapController, SLOT(handleGetPathClicked()));
+//        connect(pathsPanel, SIGNAL(unSelectClicked()), mapController, SLOT(handleUnSelectClicked()));
+//    }
 
     QObject *record = overlayUI->findChild<QObject*>("record");
     if (record)
@@ -159,8 +159,13 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(record, SIGNAL(xmlStartRecordClicked()), &thread, SLOT(onXmlStartRecordClicked()));
         connect(record, SIGNAL(xmlStopAndSaveClicked()), &thread, SLOT(onXmlStopAndSaveClicked()));
         connect(record, SIGNAL(selectXmlFileClicked()), &thread, SLOT(onSelectXmlFileClicked()));
-        connect(record, SIGNAL(playInSimulatorClicked()), &thread, SLOT(onPlayInSimulatorClicked()));
+//        connect(record, SIGNAL(playInSimulatorClicked()), &thread, SLOT(onPlayInSimulatorClicked()));
         connect(record, SIGNAL(paintGeometryClicked()), &thread, SLOT(onPaintGeometryClicked()));
+        connect(record, SIGNAL(selectPointsToggled(bool)), mapController, SLOT(handleSelectPointsToggled(bool)));
+         connect(record, SIGNAL(paintCropLandClicked()), mapController, SLOT(handlePaintCropLandClicked()));
+        connect(record, SIGNAL(unSelectClicked()), mapController, SLOT(handleUnSelectClicked()));
+        connect(record, SIGNAL(selectStartPointClicked()), mapController, SLOT(handleSelectStartPointClicked()));
+        connect(record, SIGNAL(getPathClicked()), mapController, SLOT(handleGetPathClicked()));
     }
 
     connect(&map, SIGNAL(mapReady()), mapController, SLOT(onMapReady()));

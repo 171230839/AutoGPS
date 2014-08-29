@@ -14,32 +14,35 @@
 TARGET = AutoGPS 
 TEMPLATE = app
 
-QT +=  opengl xml network declarative
+QT +=  core opengl xml network declarative
 
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets serialport multimediawidgets
 }
 
-
-# Opencv
-INCLUDEPATH += D:/opencv/build/include
+##STLPort
 
 
-CONFIG(debug,debug|release) {
-LIBS += -LD:/opencv/build/x86/vc11/lib \
-    -lopencv_core249d \
-    -lopencv_highgui249d \
-    -lopencv_imgproc249d \
-    -lopencv_features2d249d \
-    -lopencv_calib3d249d
-} else {
-LIBS += -LD:/opencv/build/x86/vc11/lib \
-    -lopencv_core249 \
-    -lopencv_highgui249 \
-    -lopencv_imgproc249 \
-    -lopencv_features2d249 \
-    -lopencv_calib3d249
-}
+
+## Opencv
+#INCLUDEPATH += D:/opencv/build/include
+
+
+#CONFIG(debug,debug|release) {
+#LIBS += -LD:/opencv/build/x86/vc11/lib \
+#    -lopencv_core249d \
+#    -lopencv_highgui249d \
+#    -lopencv_imgproc249d \
+#    -lopencv_features2d249d \
+#    -lopencv_calib3d249d
+#} else {
+#LIBS += -LD:/opencv/build/x86/vc11/lib \
+#    -lopencv_core249 \
+#    -lopencv_highgui249 \
+#    -lopencv_imgproc249 \
+#    -lopencv_features2d249 \
+#    -lopencv_calib3d249
+#}
 
 
 # ------

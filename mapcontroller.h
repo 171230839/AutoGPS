@@ -6,6 +6,7 @@
 #include <GraphicsLayer.h>
 #include <Point.h>
 
+#include <Line.h>
 using namespace EsriRuntimeQt;
 namespace EsriRuntimeQt
 {
@@ -13,7 +14,7 @@ class Point;
 class MapGraphicsView;
 class Map;
 class GraphicsLayer;
-class Line;
+
 }
 class MapController : public QObject
 {
@@ -114,23 +115,36 @@ public slots:
     void onMouseWheel(QWheelEvent);
     void onPaintGeometry(const QList<QPointF> &);
     void handleSelectStartPointClicked();
+    void onPaintLineList(QList<Line>);
 };
 
-class MyCoordinate
+class MyCoordinate : public QObject
 {
+    Q_OBJECT
 public:
-    MyCoordinate(const Point& origin, const Point& horizontal);
+    MyCoordinate(const Point& origin, const Point& horizontal, double gridWidth, QObject * parent = 0);
 
-    Point mapPointToMyCoordinate(const Point& );
-    QList<Point> mapPointsToMyCoordinate(const QList<Point>&);
-      QList<Line> pointListToLines(const QList<Point> &);
-    QList<Point> getPointListFromLines(const QList<Line>& lineList);
-    QList<Point> getPointListFromLine(const Line & line);
+    void paintGrid(const QList<Point>& pointList);
 private:
-    Point origin;
-    Point horizontal;
+    QPointF mapPointToMyCoordinate(const QPointF& );
+    QList<QPointF> mapPointsToMyCoordinate(const QList<QPointF>&);
+     QList<QLineF> pointListToLines(const QList<QPointF> &);
+    void  paintLines(const QList<QLineF>& lineList, const QLineF &, const QLineF&);
+    QList<QPointF> getYPointListFromLine(const QLineF& , const QLineF&, const QLineF&);
+    QList<QPointF> getXPointListFromLine(const QLineF& , const QLineF&, const QLineF&);
+    QLineF getXAxisLineFromList(const QList<double> &);
+    QLineF getYAxisLineFromList(const QList<double>&);
+private:
+    QPointF origin;
+    QPointF horizontal;
+//    QLineF xAxisLine;
+    double gridWidth;
    double horAngle;
-
+   double yAxisMax;
+   QList<double> yAxisList;
+   QList<double> xAxisList;
+signals:
+    void paintLineList(QList<Line>);
 };
 
 #endif // MAPCONTROLLER_H

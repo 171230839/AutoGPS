@@ -7,6 +7,9 @@
 #include <MapGraphicsView.h>
 #include <Map.h>
 #include <Line.h>
+#include <unordered_map>
+
+typedef std::unordered_map<double, double> Mymap;
 
 const   double   PI   =   3.141592653589793;
 static const double  carWidth = 2.0;
@@ -319,7 +322,7 @@ void MapController::mousePress(QMouseEvent mouseEvent)
             if (Geometry::isPoint(geometry.type()))
             {
                 paintLayer.select(id);
-                startPoint = geometry;
+                cropLandPointList.append(Point(geometry));
                 return;
             }
         }
@@ -336,6 +339,7 @@ void MapController::mousePress(QMouseEvent mouseEvent)
             {
                 paintLayer.clearSelection();
                 paintLayer.select(id);
+                startPoint = geometry;
                 return;
             }
         }
@@ -376,21 +380,14 @@ void MapController::preparePaths(const QList<Point> &pointList)
 void MapController::handleSelectPointsToggled(bool state)
 {
     bSelectPoints = state;
+    if (state)
+    {
+        cropLandPointList.clear();
+    }
 }
 
 void MapController::handlePaintCropLandClicked()
 {
-    QList<qint64> selectGraphicsId = paintLayer.selectionIds();
-    cropLandPointList.clear();
-    foreach( qint64 id, selectGraphicsId)
-    {
-        Graphic graphic = paintLayer.graphic(id);
-        Geometry geometry = graphic.geometry();
-        if (!Geometry::isPoint(geometry.type()))
-            return;
-        Point point = geometry;
-        cropLandPointList.append(point);
-    }
     if (cropLandPointList.isEmpty())
         return;
     //    pointList.append(pointList.first());
@@ -412,10 +409,29 @@ void MapController::handleGetPathClicked()
     int order = cropLandPointList.indexOf(startPoint);
     qDebug()<<"start Point x"<<startPoint.x()<<" Y:"<<startPoint.y();
     qDebug()<<"order"<<order;
+    foreach( Point temp, cropLandPointList)
+    {
+        qDebug()<<QString("temp x: %1 y: %2").arg(temp.x(), 0, 'g', 14).arg(temp.y(), 0, 'g', 14);
+    }
+
     if (order != -1)
     {
-        preparePaths(cropLandPointList);
-        getPath(order);
+        //        preparePaths(cropLandPointList);
+        //        getPath(order);
+        int size = cropLandPointList.size();
+        Point x;
+        if (order == (size - 1))
+        {
+            x = cropLandPointList.first();
+        }
+        else
+        {
+            x = cropLandPointList.at(order + 1);
+        }
+        MyCoordinate coor(startPoint, x, carWidth);
+        connect(&coor, SIGNAL(paintLineList(QList<Line>)), this, SLOT(onPaintLineList(QList<Line>)));
+        //        QList<Point> pointList = coor.mapPointsToMyCoordinate(cropLandPointList);
+        coor.paintGrid(cropLandPointList);
     }
 }
 
@@ -454,7 +470,7 @@ void MapController::getPath(int order)
 
     if (behindDistance <= frontDistance)
     {
-//        getFrontPath(order, behindAngle, frontAngle);
+        //        getFrontPath(order, behindAngle, frontAngle);
         Point x;
         if (order == 0)
         {
@@ -464,9 +480,9 @@ void MapController::getPath(int order)
         {
             x = cropLandPointList.at(order);
         }
-        MyCoordinate coor(startPoint, x);
-        QList<Point> pointList = coor.mapPointsToMyCoordinate(cropLandPointList);
-
+        MyCoordinate coor(startPoint, x, carWidth);
+        //        QList<Point> pointList = coor.mapPointsToMyCoordinate(cropLandPointList);
+        coor.paintGrid(cropLandPointList);
     }
     else
     {
@@ -480,68 +496,66 @@ void MapController::getPath(int order)
         {
             x = cropLandPointList.at(order + 1);
         }
-        MyCoordinate coor(startPoint, x);
-//        coor.paintGrid();
-        QList<Point> pointList = coor.mapPointsToMyCoordinate(cropLandPointList);
-        QList<Line> lineList = coor.pointListToLines(pointList);
-        QList<Point> getList = coor.getPointListFromLines(lineList);
-//        QList<Point> getList;
-//        foreach( Line line, lineList)
+        MyCoordinate coor(startPoint, x, carWidth);
+        coor.paintGrid(cropLandPointList);
+
+        //        QList<Point> getList;
+        //        foreach( Line line, lineList)
+        //        {
+        //            QList<Point> tempList = coor.getPointsFromLine(line);
+        //            getList.append(tempList);
+        //        }
+
+    }
+
+}
+
+//void MapController::getFrontPath(int order, double frontAngle, double)
+//{
+//    qDebug()<<"getFrontPath frontAngle:"<<frontAngle;
+//}
+
+//void MapController::getBehindPath(int order, double behindAngle, double frontAngle)
+//{
+//    qDebug()<<"getBehindPath behindAngle: " << behindAngle<< "frontAngle"<<frontAngle;
+//    double angle = 0;
+//    if ((behindAngle * frontAngle) > 0)
+//    {
+//        angle = abs(behindAngle - frontAngle);
+//    }
+//    else
+//    {
+//        if ((abs(behindAngle) + abs(frontAngle)) > 180)
 //        {
-//            QList<Point> tempList = coor.getPointsFromLine(line);
-//            getList.append(tempList);
+//            angle = abs(behindAngle) + abs(frontAngle) - 180;
 //        }
+//        else
+//        {
+//            angle = 180 - abs(behindAngle) - abs(frontAngle);
+//        }
+//    }
+//    qDebug()<<"angle"<<angle;
+//    double degree = angle * PI / 180;
+//    qDebug()<<"degree"<<degree;
+//    double l = asin(degree) * carWidth;
+//    qDebug()<<"l"<<l;
+//    double x = l * sin(frontAngle);
+//    double y = l * cos(frontAngle);
+//    Point point = cropLandPointList.at(order);
+//    qDebug()<<"point x"<<point.x() << " y:"<<point.y();
+//    Point nextPoint = cropLandPointList.at(order + 1);
+//    qDebug()<<"x:"<<x<<" y:"<<y;
+//    QList<Point> pointList;
+//    int times = abs((nextPoint.x() - point.x()) / x);
+//    for (int i = 0; i < times; ++i)
+//    {
+//        Point temp;
+//        temp.setX(point.x() - i * x);
+//        temp.setY(point.y() - i * y);
+//        pointList.append(temp);
+//    }
 
-    }
-
-}
-
-void MapController::getFrontPath(int order, double frontAngle, double)
-{
-    qDebug()<<"getFrontPath frontAngle:"<<frontAngle;
-}
-
-void MapController::getBehindPath(int order, double behindAngle, double frontAngle)
-{
-    qDebug()<<"getBehindPath behindAngle: " << behindAngle<< "frontAngle"<<frontAngle;
-    double angle = 0;
-    if ((behindAngle * frontAngle) > 0)
-    {
-        angle = abs(behindAngle - frontAngle);
-    }
-    else
-    {
-        if ((abs(behindAngle) + abs(frontAngle)) > 180)
-        {
-            angle = abs(behindAngle) + abs(frontAngle) - 180;
-        }
-        else
-        {
-            angle = 180 - abs(behindAngle) - abs(frontAngle);
-        }
-    }
-    qDebug()<<"angle"<<angle;
-    double degree = angle * PI / 180;
-    qDebug()<<"degree"<<degree;
-    double l = asin(degree) * carWidth;
-    qDebug()<<"l"<<l;
-    double x = l * sin(frontAngle);
-    double y = l * cos(frontAngle);
-    Point point = cropLandPointList.at(order);
-    qDebug()<<"point x"<<point.x() << " y:"<<point.y();
-    Point nextPoint = cropLandPointList.at(order + 1);
-    qDebug()<<"x:"<<x<<" y:"<<y;
-    QList<Point> pointList;
-    int times = abs((nextPoint.x() - point.x()) / x);
-    for (int i = 0; i < times; ++i)
-    {
-        Point temp;
-        temp.setX(point.x() - i * x);
-        temp.setY(point.y() - i * y);
-        pointList.append(temp);
-    }
-
-}
+//}
 
 void MapController::handleUnSelectClicked()
 {
@@ -550,6 +564,9 @@ void MapController::handleUnSelectClicked()
     {
         paintLayer.removeGraphic(cropLandGraphicId);
     }
+    bSelectStartPoint = false;
+    cropLandPointList.clear();
+    startPoint.clear();
 }
 
 void MapController::onMouseWheel(QWheelEvent e)
@@ -773,82 +790,315 @@ void MapController::handleSelectStartPointClicked()
     paintLayer.clearSelection();
 }
 
-MyCoordinate::MyCoordinate(const Point& origin, const Point &horizontal)
-    :origin(origin),
-      horizontal(horizontal)
+void MapController::onPaintLineList(QList<Line> lineList)
 {
-
-    Point temp;
-    temp.setX(horizontal.x() - origin.x());
-    temp.setY(horizontal.y() - origin.y());
-    horAngle = atan(temp.y() / temp.x());
+    qDebug()<<"onPaintLineList"<<lineList.size();
+    QList<QList<Point> > tmpList;
+    foreach (Line line, lineList)
+    {
+        QList<Point> pointList;
+        pointList.append(line.startXY());
+        pointList.append(line.endXY());
+        tmpList.append(pointList);
+    }
+    EsriRuntimeQt::Polyline line1(tmpList);
+    EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(255,0,0, 180), 1);
+    EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
+    paintLayer.addGraphic(graphic1);
 }
 
-Point MyCoordinate::mapPointToMyCoordinate(const Point& point)
+MyCoordinate::MyCoordinate(const Point& origin, const Point &horizontal, double gridWidth, QObject* parent)
+    : origin(origin.toQPointF()),
+      horizontal(horizontal.toQPointF()),
+      gridWidth(gridWidth),
+      QObject(parent)
 {
-    Point returnPoint;
-    Point temp;
+    qDebug()<<QString("origin x: %1 y: %2").arg(origin.x(), 0, 'g', 14).arg(origin.y(), 0, 'g', 14);
+
+    qDebug()<<QString("horizontal x: %1 y: %2").arg(horizontal.x(), 0, 'g', 14).arg(horizontal.y(), 0, 'g', 14);
+
+    QPointF temp;
+    temp.setX(horizontal.x() - origin.x());
+    temp.setY(horizontal.y() - origin.y());
+    qDebug()<<"temp  x"<<temp.x()<<" Y"<<temp.y();
+    horAngle = atan2(temp.y() , temp.x());
+    //    xAxisLine.setP1(QPointF(0,0));
+    //    xAxisLine.setP2(temp);
+}
+
+void MyCoordinate::paintGrid(const QList<Point>& pointList)
+{
+    QList<QPointF> pointFList;
+    foreach(Point point, pointList)
+    {
+        pointFList.append(point.toQPointF());
+    }
+
+    QList<QPointF> returnPointList = mapPointsToMyCoordinate(pointFList);
+    //    this->farthestPoint = getFarthestPoint(returnPointList);
+    QLineF yAxisLine = getYAxisLineFromList(this->yAxisList);
+    QLineF xAxisLine = getXAxisLineFromList(this->xAxisList);
+    QList<QLineF> lineList = pointListToLines(returnPointList);
+    paintLines(lineList, yAxisLine, xAxisLine);
+
+}
+
+QList<QPointF>  MyCoordinate::mapPointsToMyCoordinate(const QList<QPointF>& pointList)
+{
+    QList<QPointF> returnPointList;
+    foreach (QPointF point, pointList)
+    {
+        QPointF temp = mapPointToMyCoordinate(point);
+        returnPointList.append(temp);
+        qDebug()<<"Mycoordinate point x:"<<temp.x()<<" y: "<<temp.y();
+    }
+    return returnPointList;
+}
+
+QPointF MyCoordinate::mapPointToMyCoordinate(const QPointF& point)
+{
+    QPointF returnPoint;
+    QPointF temp;
     temp.setX(point.x() - origin.x());
     temp.setY(point.y() - origin.y());
-    double angle = atan(temp.y() / temp.x());
+    double angle = atan2(temp.y(), temp.x());
     qDebug()<<"angle"<<angle;
     double newAngle = angle - horAngle;
     qDebug()<<"horAngle"<<horAngle;
     qDebug()<<"newAngle"<<newAngle;
-//    double length = temp.calculateLength2D();
+    //    double length = temp.calculateLength2D();
     Line line;
     line.setStart(Point(0,0));
     line.setEnd(temp);
     double length = line.calculateLength2D();
     qDebug()<<"length"<<length;
-    returnPoint.setY(length * sin(newAngle));
-    returnPoint.setX(length * cos(newAngle));
+    double y = length * sin(newAngle);
+    returnPoint.setY(y);
+    qDebug()<<"y "<<y;
+    yAxisList.append(y);
+    double x = length * cos(newAngle);
+    returnPoint.setX(x);
+    xAxisList.append(x);
     return returnPoint;
 }
 
-QList<Point>  MyCoordinate::mapPointsToMyCoordinate(const QList<Point>& pointList)
-{
-    QList<Point> returnPointList;
-    foreach (Point point, pointList)
-    {
-        Point temp = mapPointToMyCoordinate(point);
-        returnPointList.append(temp);
-    }
 
-    return returnPointList;
-}
 
-QList<Line> MyCoordinate::pointListToLines(const QList<Point> &pointList)
+
+
+QList<QLineF> MyCoordinate::pointListToLines(const QList<QPointF> &pointList)
 {
-    QList<Line> returnLineList;
-    for (int i = 1; i < pointList.size(); ++i)
+    QList<QLineF> returnLineList;
+    qDebug()<<"pointList size"<<pointList.size();
+    for (int i = 1; i <= pointList.size(); ++i)
     {
-        Line line;
-        line.setStart(pointList.at(i-1));
-        if (i != (pointList.size() - 1))
+        QLineF line;
+        line.setP1(pointList.at(i-1));
+        if (i != (pointList.size()))
         {
-            line.setEnd(pointList.at(i));
+            line.setP2(pointList.at(i));
         }
         else
-            line.setEnd(pointList.first());
-       returnLineList.append(line);
+            line.setP2(pointList.first());
+        returnLineList.append(line);
     }
     return returnLineList;
 }
 
-QList<Point> MyCoordinate::getPointListFromLines(const QList<Line>& lineList)
+void MyCoordinate::paintLines(const QList<QLineF>& lineList, const QLineF& yAxisLine, const QLineF& xAxisLine)
 {
-    QList<Point> returnPointList;
-    foreach (Line line, lineList)
+    //    QList<QPointF> returnPointList;
+    qDebug()<<"getPointListFromLines size"<<lineList.size();
+    qDebug()<<"yAxisLine p1 " << yAxisLine.x1() << yAxisLine.y1();
+    qDebug()<<"yAxisLine p2" << yAxisLine.x2()<<yAxisLine.y2();
+    qDebug()<<"xAxisLine p1"<< xAxisLine.x1() << xAxisLine.y1();
+    qDebug()<<"xAxisLine p2"<< xAxisLine.x2() << xAxisLine.y2();
+    QList<QPointF> yPointList;
+    QList<QPointF> xPointList;
+    //    QMap<int, double> yMap;
+    Mymap yMap;
+    QHash<double, double> xMap;
+    foreach (QLineF line, lineList)
     {
-        QList<Point> list = getPointListFromLine(line);
-        returnPointList.append(list);
+        QList<QPointF> ylist = getYPointListFromLine(line, yAxisLine, xAxisLine);
+        yPointList.append(ylist);
+        QList<QPointF> xlist = getXPointListFromLine(line, yAxisLine, xAxisLine);
+        xPointList.append(xlist);
     }
+    QList<QLineF> tempList;
+    qDebug()<<"yPointList size"<<yPointList.size();
+    foreach (QPointF point, yPointList)
+    {
+        qDebug()<<"yMap insertMulti"<< point.y() << point.x();
+        //        if (yMap.contains(int(point.y())))
+        //        {
+        //            qDebug()<<"contains"<< point.y();
+        //            double v1 = yMap.value(int(point.y()));
+        //            QPointF start(v1, point.y());
+        //            QPointF end(point.x(), point.y());
+        //            QLineF line(start, end);
+        //            tempList.append(line);
+        //            continue;
+        //        }
+        //        yMap.insert(int(point.y()), point.x());
+        if (yMap.count(point.y()) > 0)
+        {
+            qDebug()<<"count"<< point.y();
+            Mymap::iterator it = yMap.find(point.y());
+            double v1 = it->second;
+            QPointF start(v1, point.y());
+            QPointF end(point.x(), point.y());
+            QLineF line(start, end);
+            tempList.append(line);
+            continue;
+        }
+        yMap.insert(Mymap::value_type(point.y(), point.x()));
+    }
+    qDebug()<<"lineList y "<< tempList.size();
+    foreach (QPointF point, xPointList)
+    {
+        if (xMap.contains(point.x()))
+        {
+            double v1 = xMap.value(point.x());
+            QPointF start(point.x(), v1);
+            QPointF end(point.x(), point.y());
+            QLineF line(start, end);
+            tempList.append(line);
+            continue;
+        }
+        xMap.insert(point.x(), point.y());
+
+    }
+
+
+    QList<Line> drawLineList;
+    foreach (QLineF line, tempList) {
+        QPointF pointP1 = line.p1();
+        QPointF pointP2 = line.p2();
+        Point point1;
+        point1.setX(pointP1.x() + this->origin.x());
+        point1.setY(pointP1.y() + this->origin.y());
+        Point point2;
+        point2.setX(pointP2.x() + this->origin.x());
+        point2.setY(pointP2.y() + this->origin.y());
+        Line tempLine;
+        tempLine.setStart(point1);
+        tempLine.setEnd(point2);
+        drawLineList.append(tempLine);
+    }
+    emit paintLineList(drawLineList);
+
+
+    //    return returnPointList;
+}
+
+QList<QPointF> MyCoordinate::getYPointListFromLine( const QLineF &line, const QLineF& yAxisLine, const QLineF& xAxisLine)
+{
+    QList<QPointF> returnPointList;
+
+    qDebug()<<"get X PointListFromLine line 1"<< line.x1() << line.y1();
+    qDebug()<<"line 2"<< line.x2()<<line.y2();
+    double ytime = abs(yAxisLine.y1() - yAxisLine.y2()) / gridWidth;
+    //    qDebug()<<"yMax"<<yMax;
+    //    double ytime = abs( line.y1() - line.y2()) / gridWidth;
+    qDebug()<<"ytime"<<ytime;
+
+    for (int i = 1; i < ytime; ++i)
+    {
+        double y = i * gridWidth + yAxisLine.y1();
+        QLineF tempLine = xAxisLine;
+        tempLine.translate(0, y);
+        qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
+        qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
+        QPointF intersectPoint;
+        QLineF::IntersectType intersectType =  line.intersect(tempLine, &intersectPoint);
+        if (intersectType == QLineF::BoundedIntersection)
+        {
+            qDebug()<<"intersectPoint x"<<intersectPoint.x() << " y"<<intersectPoint.y();
+            returnPointList.append(intersectPoint);
+        }
+    }
+    qDebug()<<"resultPointList size"<<returnPointList.size();
+
     return returnPointList;
 }
 
-QList<Point> MyCoordinate::getPointListFromLine(const Line & line)
+QList<QPointF> MyCoordinate::getXPointListFromLine( const QLineF &line, const QLineF& yAxisLine, const QLineF& xAxisLine)
 {
-    QList<Point> returnPointList;
+    QList<QPointF> returnPointList;
+
+    qDebug()<<"get Y PointListFromLine line 1"<< line.x1() << line.y1();
+    qDebug()<<"line 2"<< line.x2()<<line.y2();
+    double xtime = abs(xAxisLine.x1() - xAxisLine.x2()) / gridWidth;
+    //    qDebug()<<"yMax"<<yMax;
+    //    double ytime = abs( line.y1() - line.y2()) / gridWidth;
+    qDebug()<<"xtime"<<xtime;
+
+    for (int i = 1; i < xtime; ++i)
+    {
+        double x = i * gridWidth + xAxisLine.x1();
+        QLineF tempLine = yAxisLine;
+        tempLine.translate(x, 0);
+        qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
+        qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
+        QPointF intersectPoint;
+        QLineF::IntersectType intersectType =  line.intersect(tempLine, &intersectPoint);
+        if (intersectType == QLineF::BoundedIntersection)
+        {
+            qDebug()<<"intersectPoint x"<<intersectPoint.x() << " y"<<intersectPoint.y();
+            returnPointList.append(intersectPoint);
+        }
+    }
+    qDebug()<<"resultPointList size"<<returnPointList.size();
+
     return returnPointList;
 }
+
+QLineF MyCoordinate::getYAxisLineFromList(const QList<double> & list)
+{
+    QLineF returnLine;
+    if (list.isEmpty())
+        return returnLine;
+    double max = list.first();
+    double min = list.first();
+    foreach(double d, list)
+    {
+        if (d > max)
+        {
+            max = d;
+        }
+        if (d < min)
+        {
+            min = d;
+        }
+    }
+
+    returnLine.setP1(QPointF(0, min));
+    returnLine.setP2(QPointF(0, max));
+    return returnLine;
+}
+
+QLineF MyCoordinate::getXAxisLineFromList(const QList<double> & list)
+{
+    QLineF returnLine;
+    if (list.isEmpty())
+        return returnLine;
+    double max = list.first();
+    double min = list.first();
+    foreach(double d, list)
+    {
+        if (d > max)
+        {
+            max = d;
+        }
+        if (d < min)
+        {
+            min = d;
+        }
+    }
+
+    returnLine.setP1(QPointF(min, 0));
+    returnLine.setP2(QPointF(max, 0));
+    return returnLine;
+}
+

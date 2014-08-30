@@ -13,7 +13,7 @@
 
 #include "AutoGPS.h"
 #include <QApplication>
-
+#include <QTranslator>
 
 int main(int argc, char *argv[])
 {
@@ -21,6 +21,10 @@ int main(int argc, char *argv[])
 
     app.setOrganizationName("AutoGPS");
     app.setApplicationName("AutoGPS");
+
+    QTranslator qtTranslator;
+    qtTranslator.load("myapp.qm");
+    app.installTranslator(&qtTranslator);
 
     AutoGPS applicationWindow;
 

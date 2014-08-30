@@ -14,14 +14,11 @@
 TARGET = AutoGPS 
 TEMPLATE = app
 
-QT +=  core opengl xml network declarative
+QT +=  opengl xml network declarative
 
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets serialport multimediawidgets
 }
-
-##STLPort
-
 
 
 ## Opencv
@@ -113,4 +110,5 @@ OTHER_FILES += \
     Resources/qml/Panels/Record/SerialRecordPanel.qml \
     Resources/qml/Panels/Record/XmlRecordPanel.qml \
     Resources/qml/Panels/Record/CropLandPanel.qml \
-    Resources/qml/Panels/Record/RoutePanel.qml
+    Resources/qml/Panels/Record/RoutePanel.qml \
+    myapp.ts

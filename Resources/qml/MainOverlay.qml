@@ -33,7 +33,7 @@ LayoutItem
         //            lastFakeSpeed--;
         //        else if (rand > 0.995)
         //            lastFakeSpeed++;
-        statusBar.currentSpeed = "      Speed: " + newSpeed;
+        statusBar.currentSpeed = qsTr("      Speed: ") + newSpeed;
     }
 
 
@@ -72,7 +72,7 @@ LayoutItem
     onCurrentItemChanged:
     {
         if (currentItem === "Map")
-            classificationBar.lblClassification = "AutoGPS - Map View"
+            classificationBar.lblClassification = qsTr("AutoGPS - Map View")
         else if (currentItem === "Camera")
             classificationBar.lblClassification = "AutoGPS - Camera View"
         else if (currentItem === "3D")

@@ -2,10 +2,10 @@ import QtQuick 1.1
 
 Rectangle
 {
-  property string currentLocation: "Location: "
-  property string currentHeading : " Heading: "
-  property string currentSpeed   : "   Speed: "
-  property string currentTime : " Time: "
+  property string currentLocation: qsTr("Location: ")
+  property string currentHeading : qsTr(" Heading: ")
+  property string currentSpeed   : qsTr("   Speed: ")
+  property string currentTime : qsTr(" Time: ")
 
   id: myLocationBar
   width: 200

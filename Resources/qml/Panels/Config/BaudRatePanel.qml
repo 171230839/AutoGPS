@@ -14,7 +14,7 @@ Panel
         contentUpdated()
     }
     id: baudRatePanel
-    title: "BaudRate"
+    title: qsTr("BaudRate")
     onGoBack: stack.removePanel()
     anchors.fill:  parent
     visible: false

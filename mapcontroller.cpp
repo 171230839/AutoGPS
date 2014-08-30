@@ -6,10 +6,10 @@
 #include <SimpleFillSymbol.h>
 #include <MapGraphicsView.h>
 #include <Map.h>
-#include <Line.h>
-#include <unordered_map>
 
-typedef std::unordered_map<double, double> Mymap;
+
+
+
 
 const   double   PI   =   3.141592653589793;
 static const double  carWidth = 2.0;
@@ -355,26 +355,26 @@ void MapController::onClearClicked()
     readyPointList = false;
 }
 
-void MapController::preparePaths(const QList<Point> &pointList)
-{
-    qDebug()<<"preparePaths-size:"<<pointList.size();
+//void MapController::preparePaths(const QList<Point> &pointList)
+//{
+//    qDebug()<<"preparePaths-size:"<<pointList.size();
 
-    foreach (Point point , pointList)
-    {
-        Point temp = GeometryEngine::project(point, map->spatialReference(), WGS84);
-        qDebug()<<QString("firstP x: %1 y: %2").arg(temp.x(), 0, 'g', 14).arg(temp.y(), 0, 'g', 14);
-        wgsList.append(temp);
-    }
-    wgsList.append(wgsList.first());
-    for (int i = 1; i < wgsList.size(); ++i)
-    {
-        GeodesicDistanceResult  distance = GeometryEngine::geodesicDistanceBetweenPoints(wgsList.at(i - 1), wgsList.at(i), WGS84);
-        qDebug()<<"distance :"<<distance.distance() << "  angle:"<<distance.azimuthFrom1To2();
-        distanceList.append(distance.distance());
-        azimuthList.append(distance.azimuthFrom1To2());
-    }
-    wgsList.pop_back();
-}
+//    foreach (Point point , pointList)
+//    {
+//        Point temp = GeometryEngine::project(point, map->spatialReference(), WGS84);
+//        qDebug()<<QString("firstP x: %1 y: %2").arg(temp.x(), 0, 'g', 14).arg(temp.y(), 0, 'g', 14);
+//        wgsList.append(temp);
+//    }
+//    wgsList.append(wgsList.first());
+//    for (int i = 1; i < wgsList.size(); ++i)
+//    {
+//        GeodesicDistanceResult  distance = GeometryEngine::geodesicDistanceBetweenPoints(wgsList.at(i - 1), wgsList.at(i), WGS84);
+//        qDebug()<<"distance :"<<distance.distance() << "  angle:"<<distance.azimuthFrom1To2();
+//        distanceList.append(distance.distance());
+//        azimuthList.append(distance.azimuthFrom1To2());
+//    }
+//    wgsList.pop_back();
+//}
 
 
 void MapController::handleSelectPointsToggled(bool state)
@@ -416,146 +416,68 @@ void MapController::handleGetPathClicked()
 
     if (order != -1)
     {
-        //        preparePaths(cropLandPointList);
-        //        getPath(order);
-        int size = cropLandPointList.size();
-        Point x;
-        if (order == (size - 1))
-        {
-            x = cropLandPointList.first();
-        }
-        else
-        {
-            x = cropLandPointList.at(order + 1);
-        }
+
+        Point x = getXAxisPoint(cropLandPointList, order);
         MyCoordinate coor(startPoint, x, carWidth);
         connect(&coor, SIGNAL(paintLineList(QList<Line>)), this, SLOT(onPaintLineList(QList<Line>)));
-        //        QList<Point> pointList = coor.mapPointsToMyCoordinate(cropLandPointList);
         coor.paintGrid(cropLandPointList);
     }
 }
 
-
-
-void MapController::getPath(int order)
+Point MapController::getXAxisPoint(const QList<Point>& list, int order)
 {
-    if (order < 0)
-        return;
-    //    boolcompareDistance(order);
-    int index = cropLandPointList.size();
-    qDebug()<<"order:"<<order;
-    qDebug()<<"index:"<<index;
+    Point returnPoint;
+    QList<double> distanceList;
+
+    for (int i = 1; i <= list.size(); ++i)
+    {
+        if (i != list.size())
+        {
+        GeodesicDistanceResult  distance = GeometryEngine::geodesicDistanceBetweenPoints(list.at(i - 1), list.at(i), map->spatialReference());
+        distanceList.append(distance.distance());
+        }
+        else
+        {
+            GeodesicDistanceResult  distance = GeometryEngine::geodesicDistanceBetweenPoints(list.at(i - 1), list.first(), map->spatialReference());
+            distanceList.append(distance.distance());
+        }
+    }
     double behindDistance ;
     double frontDistance ;
-    double behindAngle;
-    double frontAngle;
     if (order == 0)
     {
         behindDistance = distanceList.at(0);
-        behindAngle = azimuthList.at(0);
         frontDistance = distanceList.back();
-        frontAngle = azimuthList.back();
     }
-    else if (order <= index)
+    else if (order < list.size())
     {
-        qDebug()<<"order<=";
         behindDistance = distanceList.at(order);
-        behindAngle = azimuthList.at(order);
         frontDistance = distanceList.at(order -1);
-        frontAngle = azimuthList.at(order - 1);
     }
-
-    qDebug()<<"behindD"<<behindDistance;
-    qDebug()<<"frontD"<<frontDistance;
-
     if (behindDistance <= frontDistance)
     {
-        //        getFrontPath(order, behindAngle, frontAngle);
-        Point x;
         if (order == 0)
         {
-            x = cropLandPointList.back();
+            returnPoint = cropLandPointList.back();
         }
         else
         {
-            x = cropLandPointList.at(order);
+            returnPoint = cropLandPointList.at(order - 1);
         }
-        MyCoordinate coor(startPoint, x, carWidth);
-        //        QList<Point> pointList = coor.mapPointsToMyCoordinate(cropLandPointList);
-        coor.paintGrid(cropLandPointList);
     }
     else
     {
-        //    getBehindPath(order, behindAngle, frontAngle);
-        Point x;
-        if (order == index)
+        if (order == (list.size() - 1))
         {
-            x = cropLandPointList.first();
+            returnPoint = cropLandPointList.first();
         }
         else
         {
-            x = cropLandPointList.at(order + 1);
+            returnPoint = cropLandPointList.at(order + 1);
         }
-        MyCoordinate coor(startPoint, x, carWidth);
-        coor.paintGrid(cropLandPointList);
-
-        //        QList<Point> getList;
-        //        foreach( Line line, lineList)
-        //        {
-        //            QList<Point> tempList = coor.getPointsFromLine(line);
-        //            getList.append(tempList);
-        //        }
-
     }
-
+    return returnPoint;
 }
-
-//void MapController::getFrontPath(int order, double frontAngle, double)
-//{
-//    qDebug()<<"getFrontPath frontAngle:"<<frontAngle;
-//}
-
-//void MapController::getBehindPath(int order, double behindAngle, double frontAngle)
-//{
-//    qDebug()<<"getBehindPath behindAngle: " << behindAngle<< "frontAngle"<<frontAngle;
-//    double angle = 0;
-//    if ((behindAngle * frontAngle) > 0)
-//    {
-//        angle = abs(behindAngle - frontAngle);
-//    }
-//    else
-//    {
-//        if ((abs(behindAngle) + abs(frontAngle)) > 180)
-//        {
-//            angle = abs(behindAngle) + abs(frontAngle) - 180;
-//        }
-//        else
-//        {
-//            angle = 180 - abs(behindAngle) - abs(frontAngle);
-//        }
-//    }
-//    qDebug()<<"angle"<<angle;
-//    double degree = angle * PI / 180;
-//    qDebug()<<"degree"<<degree;
-//    double l = asin(degree) * carWidth;
-//    qDebug()<<"l"<<l;
-//    double x = l * sin(frontAngle);
-//    double y = l * cos(frontAngle);
-//    Point point = cropLandPointList.at(order);
-//    qDebug()<<"point x"<<point.x() << " y:"<<point.y();
-//    Point nextPoint = cropLandPointList.at(order + 1);
-//    qDebug()<<"x:"<<x<<" y:"<<y;
-//    QList<Point> pointList;
-//    int times = abs((nextPoint.x() - point.x()) / x);
-//    for (int i = 0; i < times; ++i)
-//    {
-//        Point temp;
-//        temp.setX(point.x() - i * x);
-//        temp.setY(point.y() - i * y);
-//        pointList.append(temp);
-//    }
-
-//}
 
 void MapController::handleUnSelectClicked()
 {
@@ -916,9 +838,9 @@ void MyCoordinate::paintLines(const QList<QLineF>& lineList, const QLineF& yAxis
     qDebug()<<"xAxisLine p2"<< xAxisLine.x2() << xAxisLine.y2();
     QList<QPointF> yPointList;
     QList<QPointF> xPointList;
-    //    QMap<int, double> yMap;
-    Mymap yMap;
-    QHash<double, double> xMap;
+    QHash<QString, double> yMap;
+    //    Mymap yMap;
+    QHash<QString, double> xMap;
     foreach (QLineF line, lineList)
     {
         QList<QPointF> ylist = getYPointListFromLine(line, yAxisLine, xAxisLine);
@@ -931,62 +853,33 @@ void MyCoordinate::paintLines(const QList<QLineF>& lineList, const QLineF& yAxis
     foreach (QPointF point, yPointList)
     {
         qDebug()<<"yMap insertMulti"<< point.y() << point.x();
-        //        if (yMap.contains(int(point.y())))
-        //        {
-        //            qDebug()<<"contains"<< point.y();
-        //            double v1 = yMap.value(int(point.y()));
-        //            QPointF start(v1, point.y());
-        //            QPointF end(point.x(), point.y());
-        //            QLineF line(start, end);
-        //            tempList.append(line);
-        //            continue;
-        //        }
-        //        yMap.insert(int(point.y()), point.x());
-        if (yMap.count(point.y()) > 0)
+        if (yMap.contains(QString::number(point.y())))
         {
-            qDebug()<<"count"<< point.y();
-            Mymap::iterator it = yMap.find(point.y());
-            double v1 = it->second;
+            qDebug()<<"contains"<< point.y();
+            double v1 = yMap.value(QString::number(point.y()));
             QPointF start(v1, point.y());
             QPointF end(point.x(), point.y());
             QLineF line(start, end);
             tempList.append(line);
             continue;
         }
-        yMap.insert(Mymap::value_type(point.y(), point.x()));
+        yMap.insert(QString::number(point.y()), point.x());
     }
     qDebug()<<"lineList y "<< tempList.size();
     foreach (QPointF point, xPointList)
     {
-        if (xMap.contains(point.x()))
+        if (xMap.contains(QString::number(point.x())))
         {
-            double v1 = xMap.value(point.x());
+            double v1 = xMap.value(QString::number(point.x()));
             QPointF start(point.x(), v1);
             QPointF end(point.x(), point.y());
             QLineF line(start, end);
             tempList.append(line);
             continue;
         }
-        xMap.insert(point.x(), point.y());
+        xMap.insert(QString::number(point.x()), point.y());
 
     }
-
-
-    //    QList<Line> drawLineList;
-    //    foreach (QLineF line, tempList) {
-    //        QPointF pointP1 = line.p1();
-    //        QPointF pointP2 = line.p2();
-    //        Point point1;
-    //        point1.setX(pointP1.x() + this->origin.x());
-    //        point1.setY(pointP1.y() + this->origin.y());
-    //        Point point2;
-    //        point2.setX(pointP2.x() + this->origin.x());
-    //        point2.setY(pointP2.y() + this->origin.y());
-    //        Line tempLine;
-    //        tempLine.setStart(point1);
-    //        tempLine.setEnd(point2);
-    //        drawLineList.append(tempLine);
-    //    }
 
     QList<Line> drawLineList = myLinesToMapLines(tempList);
     qDebug()<<"drawLineList size"<<drawLineList.size();

@@ -45,17 +45,17 @@ private:
 
     qint64 graphicId;
 
-    void preparePaths(const QList<Point>&);
-    static const  int WGS84 = 4326;
+//    void preparePaths(const QList<Point>&);
+//    static const  int WGS84 = 4326;
 
     bool bSelectPoints;
-    QList<Point> wgsList;
-    QList<double> distanceList;
-    QList<double> azimuthList;
+//    QList<Point> wgsList;
+//    QList<double> distanceList;
+//    QList<double> azimuthList;
 //    qint64 getSelectedGraphicId();
-    void getPath(int);
-    void getFrontPath(int, double, double);
-    void getBehindPath(int, double, double);
+//    void getPath(int);
+//    void getFrontPath(int, double, double);
+//    void getBehindPath(int, double, double);
     bool bTiledLayerVisible;
 //    bool bTiledLayerVisibleGreater;
     GraphicsLayer paintLayer;
@@ -68,7 +68,7 @@ private:
     bool bSelectStartPoint;
     QList<Point> cropLandPointList;
     Point startPoint;
-
+    Point getXAxisPoint(const QList<Point>& list, int order);
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);

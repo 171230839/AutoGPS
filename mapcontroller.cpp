@@ -864,6 +864,7 @@ QPointF MyCoordinate::mapPointToMyCoordinate(const QPointF& point)
     double angle = atan2(temp.y(), temp.x());
     qDebug()<<"angle"<<angle;
     double newAngle = angle - horAngle;
+
     qDebug()<<"horAngle"<<horAngle;
     qDebug()<<"newAngle"<<newAngle;
     //    double length = temp.calculateLength2D();
@@ -971,21 +972,24 @@ void MyCoordinate::paintLines(const QList<QLineF>& lineList, const QLineF& yAxis
     }
 
 
-    QList<Line> drawLineList;
-    foreach (QLineF line, tempList) {
-        QPointF pointP1 = line.p1();
-        QPointF pointP2 = line.p2();
-        Point point1;
-        point1.setX(pointP1.x() + this->origin.x());
-        point1.setY(pointP1.y() + this->origin.y());
-        Point point2;
-        point2.setX(pointP2.x() + this->origin.x());
-        point2.setY(pointP2.y() + this->origin.y());
-        Line tempLine;
-        tempLine.setStart(point1);
-        tempLine.setEnd(point2);
-        drawLineList.append(tempLine);
-    }
+    //    QList<Line> drawLineList;
+    //    foreach (QLineF line, tempList) {
+    //        QPointF pointP1 = line.p1();
+    //        QPointF pointP2 = line.p2();
+    //        Point point1;
+    //        point1.setX(pointP1.x() + this->origin.x());
+    //        point1.setY(pointP1.y() + this->origin.y());
+    //        Point point2;
+    //        point2.setX(pointP2.x() + this->origin.x());
+    //        point2.setY(pointP2.y() + this->origin.y());
+    //        Line tempLine;
+    //        tempLine.setStart(point1);
+    //        tempLine.setEnd(point2);
+    //        drawLineList.append(tempLine);
+    //    }
+
+    QList<Line> drawLineList = myLinesToMapLines(tempList);
+    qDebug()<<"drawLineList size"<<drawLineList.size();
     emit paintLineList(drawLineList);
 
 
@@ -1102,3 +1106,32 @@ QLineF MyCoordinate::getXAxisLineFromList(const QList<double> & list)
     return returnLine;
 }
 
+QList<Line> MyCoordinate::myLinesToMapLines(const QList<QLineF> &lineList)
+{
+    QList<Line> returnList;
+    foreach( QLineF line, lineList)
+    {
+        QPointF pointP1 = line.p1();
+        QPointF pointP2 = line.p2();
+        Point p1 = myPointToMapPoint(pointP1);
+        Point p2 = myPointToMapPoint(pointP2);
+        Line tempLine;
+        tempLine.setStart(p1);
+        tempLine.setEnd(p2);
+        returnList.append(tempLine);
+    }
+    return returnList;
+}
+
+Point MyCoordinate::myPointToMapPoint(const QPointF & point)
+{
+    double myAngle = atan2(point.y() , point.x());
+    double angle = horAngle  + myAngle;
+
+    Point returnpoint;
+    double length = sqrt(point.x() * point.x() + point.y() * point.y());
+    returnpoint.setX(length * cos(angle) + origin.x());
+    returnpoint.setY(length * sin(angle) + origin.y());
+
+    return returnpoint;
+}

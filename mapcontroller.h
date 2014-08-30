@@ -25,20 +25,6 @@ public:
 
     SimpleGraphicOverlay*  getSimpleGraphic() { return this->drawingOverlay;}
 private:
-
-    //    bool filterMessages(const QString& strMessage);
-    //    void transmitMessages(QByteArray datagram);
-    //    void setMessagesStream(const QString& stream);
-    //    void setMessagesStream(QXmlStreamReader& reader);
-    //    bool readMessages(QXmlStreamReader& reader);
-    //    bool readMessage(QXmlStreamReader& reader);
-    //    void skipUnknownElement(QXmlStreamReader& reader);
-    //    QString getReaderValue(QXmlStreamReader& reader);
-    //    void readToElementEnd(QXmlStreamReader& reader);
-    //    void showHideMe(bool show, Point atPoint, double withHeading);
-
-
-
     Map* map;
     MapGraphicsView* mapGraphicsView;
 
@@ -134,6 +120,8 @@ private:
     QList<QPointF> getXPointListFromLine(const QLineF& , const QLineF&, const QLineF&);
     QLineF getXAxisLineFromList(const QList<double> &);
     QLineF getYAxisLineFromList(const QList<double>&);
+    QList<Line> myLinesToMapLines(const QList<QLineF> &lineList);
+    Point myPointToMapPoint(const QPointF & point);
 private:
     QPointF origin;
     QPointF horizontal;

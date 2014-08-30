@@ -10,19 +10,19 @@ Panel
     property Panel recordPanel
 
     id: mainPanel
-    title: "Main Menu"
+    title: qsTr("Main Menu")
     delegate: MultiDelegate { }
     model:
         [
-          ModelObject { text: "Start Work"; onNoArgModelSignal: stack.addPanel(workerPanel);},
-        ModelObject { text: "Config"; onNoArgModelSignal: stack.addPanel(configPanel); },
-        ModelObject { text: "Record"; onNoArgModelSignal: stack.addPanel(recordPanel);}
+          ModelObject { text: qsTr("Start Work"); onNoArgModelSignal: stack.addPanel(workerPanel);},
+        ModelObject { text: qsTr("Config"); onNoArgModelSignal: stack.addPanel(configPanel); },
+        ModelObject { text: qsTr("Record"); onNoArgModelSignal: stack.addPanel(recordPanel);}
     ]
 
     PushButton
     {
         id: btnExit
-        buttonText: "Quit Application"
+        buttonText: qsTr("Quit Application")
         buttonDefaultIcon: "../../icons/Menu-Button-Normal.png"
         buttonActiveIcon: "../../icons/Menu-Button-Pressed.png"
         width: 150

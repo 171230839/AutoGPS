@@ -19,8 +19,10 @@ QT +=  opengl xml network declarative
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets serialport multimediawidgets
 }
-
-
+#TRANSLATIONS = myapp.ts
+DESTDIR = ./
+#release:DEFINES += QT_NO_WARNING_OUTPUT\
+#                   QT_NO_DEBUG_OUTPUT
 ## Opencv
 #INCLUDEPATH += D:/opencv/build/include
 

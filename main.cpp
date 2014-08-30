@@ -15,12 +15,14 @@
 #include <QApplication>
 #include <QTranslator>
 
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
     app.setOrganizationName("AutoGPS");
     app.setApplicationName("AutoGPS");
+
 
     QTranslator qtTranslator;
     qtTranslator.load("myapp.qm");

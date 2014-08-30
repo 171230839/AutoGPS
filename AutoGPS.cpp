@@ -1,5 +1,5 @@
 #include "AutoGPS.h"
-#include <QApplication>
+//#include <QApplication>
 #include <ArcGISLocalTiledLayer.h>
 #include <ArcGISRuntime.h>
 #include <QtDeclarative/QDeclarativeComponent>
@@ -42,7 +42,8 @@ AutoGPS::AutoGPS (QWidget *parent):
     map.setMinScale(10);
 
     this->setCentralWidget(mapGraphicsView);
-    QString tpkPath = QApplication::applicationDirPath() + QDir::separator() + "AutoGPS.tpk";
+//    QString tpkPath = QApplication::applicationDirPath() + "/AutoGPS.tpk";
+    QString tpkPath = "AutoGPS.tpk";
     ArcGISLocalTiledLayer tiledLayer(tpkPath);
     tiledLayer.setName("tiledLayer");
     qDebug()<<" items size"<<mapGraphicsView->items().size();
@@ -131,23 +132,10 @@ AutoGPS::AutoGPS (QWidget *parent):
     {
         connect(geometryPanel, SIGNAL(pointsToggled(bool)), mapController, SLOT(handlePointsToggled(bool)));
         connect(geometryPanel, SIGNAL(toLinesClicked()), mapController, SLOT(handleToLinesClicked()));
-//        connect(geometryPanel, SIGNAL(okClicked()), mapController, SLOT(handleOkClicked()));
-        connect(geometryPanel, SIGNAL(toPolygonClicked()), mapController, SLOT(handleToPolygonClicked()));
+     connect(geometryPanel, SIGNAL(toPolygonClicked()), mapController, SLOT(handleToPolygonClicked()));
         connect(geometryPanel, SIGNAL(clearClicked()), mapController, SLOT(onClearClicked()));
     }
 
-    QObject *workerPanel = overlayUI->findChild<QObject*>("workerPanel");
-    if (workerPanel)
-    {
-        //        connect(workerPanel, SIGNAL(selectPointToggled(bool)), mapController, SLOT(handleSelectPointToggled(bool)));
-    }
-//    QObject *pathsPanel = overlayUI->findChild<QObject*>("pathsPanel");
-//    if (pathsPanel)
-//    {
-//        connect(pathsPanel, SIGNAL(selectPointToggled(bool)), mapController, SLOT(handleSelectPointToggled(bool)));
-//        connect(pathsPanel, SIGNAL(getPathClicked()), mapController, SLOT(handleGetPathClicked()));
-//        connect(pathsPanel, SIGNAL(unSelectClicked()), mapController, SLOT(handleUnSelectClicked()));
-//    }
 
     QObject *record = overlayUI->findChild<QObject*>("record");
     if (record)

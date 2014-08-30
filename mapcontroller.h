@@ -45,30 +45,22 @@ private:
 
     qint64 graphicId;
 
-//    void preparePaths(const QList<Point>&);
-//    static const  int WGS84 = 4326;
-
     bool bSelectPoints;
-//    QList<Point> wgsList;
-//    QList<double> distanceList;
-//    QList<double> azimuthList;
-//    qint64 getSelectedGraphicId();
-//    void getPath(int);
-//    void getFrontPath(int, double, double);
-//    void getBehindPath(int, double, double);
     bool bTiledLayerVisible;
-//    bool bTiledLayerVisibleGreater;
+
     GraphicsLayer paintLayer;
     QStringList pointListToMGRS(const QList<Point>&);
     void paintMgrsGrid(QString &);
     Point MGRSToMapPoint(const QString&);
-//    void paintGridItem(const QList<Point>&);
+    //    void paintGridItem(const QList<Point>&);
     void mgrsListToLines(const QStringList&, const QStringList&);
     qint64 cropLandGraphicId;
     bool bSelectStartPoint;
     QList<Point> cropLandPointList;
     Point startPoint;
     Point getXAxisPoint(const QList<Point>& list, int order);
+    qint64 paintLinesGraphicId;
+
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);
@@ -90,7 +82,7 @@ public slots:
     void onAvaliblePosition(double, double, double);
     void handlePointsToggled(bool);
     void handleToLinesClicked();
-//    void handleOkClicked();
+    //    void handleOkClicked();
     void handleToPolygonClicked();
     void onClearClicked();
     void mousePress(QMouseEvent);
@@ -102,6 +94,7 @@ public slots:
     void onPaintGeometry(const QList<QPointF> &);
     void handleSelectStartPointClicked();
     void onPaintLineList(QList<Line>);
+    void onPaintPathList(QList<Line>);
 };
 
 class MyCoordinate : public QObject
@@ -114,7 +107,7 @@ public:
 private:
     QPointF mapPointToMyCoordinate(const QPointF& );
     QList<QPointF> mapPointsToMyCoordinate(const QList<QPointF>&);
-     QList<QLineF> pointListToLines(const QList<QPointF> &);
+    QList<QLineF> pointListToLines(const QList<QPointF> &);
     void  paintLines(const QList<QLineF>& lineList, const QLineF &, const QLineF&);
     QList<QPointF> getYPointListFromLine(const QLineF& , const QLineF&, const QLineF&);
     QList<QPointF> getXPointListFromLine(const QLineF& , const QLineF&, const QLineF&);
@@ -122,17 +115,19 @@ private:
     QLineF getYAxisLineFromList(const QList<double>&);
     QList<Line> myLinesToMapLines(const QList<QLineF> &lineList);
     Point myPointToMapPoint(const QPointF & point);
+    QList<QPointF> getPathListFromLine(const QLineF &line, const QLineF& yAxisLine, const QLineF& xAxisLine);
 private:
     QPointF origin;
     QPointF horizontal;
-//    QLineF xAxisLine;
+    //    QLineF xAxisLine;
     double gridWidth;
-   double horAngle;
-   double yAxisMax;
-   QList<double> yAxisList;
-   QList<double> xAxisList;
+    double horAngle;
+    double yAxisMax;
+    QList<double> yAxisList;
+    QList<double> xAxisList;
 signals:
     void paintLineList(QList<Line>);
+    void paintPathList(QList<Line>);
 };
 
 #endif // MAPCONTROLLER_H

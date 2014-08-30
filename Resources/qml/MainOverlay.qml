@@ -19,7 +19,7 @@ LayoutItem
 
     function updateLocation(newLocation)
     {
-        statusBar.currentLocation = "Location: " + newLocation
+        statusBar.currentLocation = qsTr("Location: ") + newLocation
     }
 
     function updateSpeed(newSpeed)
@@ -39,7 +39,7 @@ LayoutItem
 
     function updateHeading(newHeading)
     {
-        statusBar.currentHeading = " Heading: " + newHeading
+        statusBar.currentHeading = qsTr(" Heading: ") + newHeading
     }
 
     function updateMapRotation(newRotation)
@@ -49,7 +49,7 @@ LayoutItem
 
     function updateTime(newTime)
     {
-        statusBar.currentTime = "Time: " + newTime
+        statusBar.currentTime = qsTr("Time: ") + newTime
     }
 
     function error(s)
@@ -74,16 +74,16 @@ LayoutItem
         if (currentItem === "Map")
             classificationBar.lblClassification = qsTr("AutoGPS - Map View")
         else if (currentItem === "Camera")
-            classificationBar.lblClassification = "AutoGPS - Camera View"
+            classificationBar.lblClassification = qsTr("AutoGPS - Camera View")
         else if (currentItem === "3D")
-            classificationBar.lblClassification = "AutoGPS - 3D View"
+            classificationBar.lblClassification = qsTr("AutoGPS - 3D View")
     }
 
     ClassificationBar
     {
         id: classificationBar
         width: parent.width
-        lblClassification: "AutoGPS - Map View"
+        lblClassification: qsTr("AutoGPS - Map View")
         classificationColor: Qt.rgba(0, 1, 0, 1)
         ScrollButton
         {

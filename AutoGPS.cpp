@@ -9,7 +9,7 @@
 #include <QtDeclarative/QDeclarativeEngine>
 #include <QGraphicsWidget>
 #include <MapGraphicsView.h>
-
+#include <QFileDialog>
 
 
 static const QString UI_OVERLAY_PATH("qrc:/Resources/qml/MainOverlay.qml");
@@ -42,8 +42,8 @@ AutoGPS::AutoGPS (QWidget *parent):
     map.setMinScale(10);
 
     this->setCentralWidget(mapGraphicsView);
-//    QString tpkPath = QApplication::applicationDirPath() + "/AutoGPS.tpk";
-    QString tpkPath = "AutoGPS.tpk";
+    QString tpkPath = QCoreApplication::applicationDirPath() + "/AutoGPS.tpk";
+//    QString tpkPath = "AutoGPS.tpk";
     ArcGISLocalTiledLayer tiledLayer(tpkPath);
     tiledLayer.setName("tiledLayer");
     qDebug()<<" items size"<<mapGraphicsView->items().size();
@@ -54,7 +54,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     //    ArcGISLocalTiledLayer tiledLayer("D:/Qt/QtSampleApplication_10.2.3_win32/sdk/samples/data/tpks/Topographic.tpk");
     //    map.addLayer(tiledLayer);
 
-    mapController = new MapController(&map, mapGraphicsView, this);
+    mapController = new MapController(&map, mapGraphicsView, this, this);
      camera = new Camera(mapGraphicsView, this);
 
 
@@ -137,7 +137,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     }
 
 
-    QObject *record = overlayUI->findChild<QObject*>("record");
+ record = overlayUI->findChild<QObject*>("record");
     if (record)
     {
         connect(record, SIGNAL(startRecordClicked()), &thread, SLOT(onStartRecordClicked()));
@@ -154,6 +154,7 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(record, SIGNAL(unSelectClicked()), mapController, SLOT(handleUnSelectClicked()));
         connect(record, SIGNAL(selectStartPointClicked()), mapController, SLOT(handleSelectStartPointClicked()));
         connect(record, SIGNAL(getPathClicked()), mapController, SLOT(handleGetPathClicked()));
+        connect(record, SIGNAL(toCroplandClicked()), mapController, SLOT(onToCroplandClicked()));
     }
 
     connect(&map, SIGNAL(mapReady()), mapController, SLOT(onMapReady()));

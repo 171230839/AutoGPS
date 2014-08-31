@@ -20,13 +20,14 @@ class MapController : public QObject
 {
     Q_OBJECT
 public:
-    explicit MapController(Map* inputMap, MapGraphicsView *inputGraphicsView, QObject* parent = 0);
+    explicit MapController(Map* inputMap, MapGraphicsView *inputGraphicsView, QWidget*,QObject* parent = 0);
     ~MapController();
 
     SimpleGraphicOverlay*  getSimpleGraphic() { return this->drawingOverlay;}
 private:
     Map* map;
     MapGraphicsView* mapGraphicsView;
+    QWidget* widget;
 
     GraphicsLayer  pointsLayer;
     Point ownshipStartingMapPoint;
@@ -59,7 +60,7 @@ private:
     QList<Point> cropLandPointList;
     Point startPoint;
     Point getXAxisPoint(const QList<Point>& list, int order);
-    qint64 paintLinesGraphicId;
+    QString projectName;
 
 signals:
     void headingChanged(QVariant newHeading);
@@ -95,6 +96,8 @@ public slots:
     void handleSelectStartPointClicked();
     void onPaintLineList(QList<Line>);
     void onPaintPathList(QList<Line>);
+    void onPaintCornerList(QList<Line>);
+    void onToCroplandClicked();
 };
 
 class MyCoordinate : public QObject
@@ -116,6 +119,7 @@ private:
     QList<Line> myLinesToMapLines(const QList<QLineF> &lineList);
     Point myPointToMapPoint(const QPointF & point);
     QList<QPointF> getPathListFromLine(const QLineF &line, const QLineF& yAxisLine, const QLineF& xAxisLine);
+    QList<QLineF> getCornerListFromPathLineList(const QList<QLineF>&, const QLineF&, const QLineF&);
 private:
     QPointF origin;
     QPointF horizontal;
@@ -128,6 +132,7 @@ private:
 signals:
     void paintLineList(QList<Line>);
     void paintPathList(QList<Line>);
+    void paintCornerList(QList<Line>);
 };
 
 #endif // MAPCONTROLLER_H

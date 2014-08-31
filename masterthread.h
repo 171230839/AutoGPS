@@ -144,6 +144,7 @@ public slots:
     void onSelectXmlFileClicked();
     void onPlayInSimulatorClicked();
     void onPaintGeometryClicked();
+
 };
 //! [0]
 

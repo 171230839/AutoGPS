@@ -40,6 +40,7 @@ private slots:
     void updateNorthArrow();
 public slots:
     void  handleBasemapChanged(QString);
+
 private:
     EsriRuntimeQt::Map map;
     EsriRuntimeQt::MapGraphicsView* mapGraphicsView;
@@ -52,7 +53,7 @@ private:
     QDeclarativeContext * context ;
     MasterThread thread;
     Camera* camera;
-
+ QObject *record ;
     void setBasemapFirst();
     void setBasemapSecond();
     void setBasemapThird();

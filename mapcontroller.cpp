@@ -6,7 +6,8 @@
 #include <SimpleFillSymbol.h>
 #include <MapGraphicsView.h>
 #include <Map.h>
-
+//#include <QApplication>
+#include <QFileDialog>
 
 
 
@@ -16,10 +17,12 @@ static const double  carWidth = 2.0;
 
 MapController::MapController(Map* inputMap,
                              MapGraphicsView* inputGraphicsView,
+                             QWidget* widget,
                              QObject* parent):
     map(inputMap),
     mapGraphicsView(inputGraphicsView),
-    QObject(parent),
+    widget(widget),
+  QObject(parent),
     showOwnship(true),
     followOwnship(false),
     isMapReady(false),
@@ -421,6 +424,7 @@ void MapController::handleGetPathClicked()
         MyCoordinate coor(startPoint, x, carWidth);
         connect(&coor, SIGNAL(paintLineList(QList<Line>)), this, SLOT(onPaintLineList(QList<Line>)));
         connect(&coor, SIGNAL(paintPathList(QList<Line>)), this, SLOT(onPaintPathList(QList<Line>)));
+        connect(&coor, SIGNAL(paintCornerList(QList<Line>)), this, SLOT(onPaintCornerList(QList<Line>)));
         coor.paintGrid(cropLandPointList);
     }
 }
@@ -490,10 +494,6 @@ void MapController::handleUnSelectClicked()
     bSelectStartPoint = false;
     cropLandPointList.clear();
     startPoint.clear();
-    if (paintLinesGraphicId)
-    {
-        paintLayer.removeGraphic(paintLinesGraphicId);
-    }
 }
 
 void MapController::onMouseWheel(QWheelEvent e)
@@ -703,7 +703,7 @@ void MapController::mgrsListToLines(const QStringList & list1,const QStringList&
     EsriRuntimeQt::Polyline line1(tmpList);
     EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(0,255,0, 50), 1);
     EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
-    paintLinesGraphicId = paintLayer.addGraphic(graphic1);
+    paintLayer.addGraphic(graphic1);
 }
 
 void MapController::handleSelectStartPointClicked()
@@ -742,13 +742,48 @@ void MapController::onPaintPathList(QList<Line> lineList)
         pointList.append(line.startXY());
         pointList.append(line.endXY());
         tmpList.append(pointList);
-//        QList<Point> arrow =
+        //        QList<Point> arrow =
     }
     EsriRuntimeQt::Polyline line1(tmpList);
     EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(255,0,255, 200), 1);
     EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
     paintLayer.addGraphic(graphic1);
 }
+
+void MapController::onPaintCornerList(QList<Line> lineList)
+{
+    QList<QList<Point> > tmpList;
+    foreach (Line line, lineList)
+    {
+        QList<Point> pointList;
+        pointList.append(line.startXY());
+        pointList.append(line.endXY());
+        tmpList.append(pointList);
+        //        QList<Point> arrow =
+    }
+    EsriRuntimeQt::Polyline line1(tmpList);
+    EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(255,0,255, 200), 1);
+    EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
+    paintLayer.addGraphic(graphic1);
+}
+
+void MapController::onToCroplandClicked()
+{
+    QString dirPath = QCoreApplication::applicationDirPath();
+    QDir dir(dirPath);
+    if (!dir.exists("Projects"))
+    {
+        dir.mkdir("Projects");
+    }
+    qDebug()<<"dirPath"<<dirPath;
+   projectName = QFileDialog::getExistingDirectory(widget, tr("Open Directory"),
+                                                    dirPath + "/Projects",
+                                                    QFileDialog::ShowDirsOnly
+                                                    | QFileDialog::DontResolveSymlinks);
+
+}
+
+
 
 MyCoordinate::MyCoordinate(const Point& origin, const Point &horizontal, double gridWidth, QObject* parent)
     : origin(origin.toQPointF()),
@@ -878,8 +913,8 @@ void MyCoordinate::paintLines(const QList<QLineF>& lineList, const QLineF& yAxis
         {
             qDebug()<<"contains"<< point.y();
             double v1 = yMap.value(QString::number(point.y()));
-            QPointF start(v1, point.y());
-            QPointF end(point.x(), point.y());
+            QPointF start(point.x(), point.y());
+            QPointF end(v1, point.y());
             QLineF line(start, end);
             tempList.append(line);
             continue;
@@ -894,6 +929,7 @@ void MyCoordinate::paintLines(const QList<QLineF>& lineList, const QLineF& yAxis
             double v1 = xMap.value(QString::number(point.x()));
             QPointF start(point.x(), v1);
             QPointF end(point.x(), point.y());
+
             QLineF line(start, end);
             tempList.append(line);
             continue;
@@ -914,25 +950,33 @@ void MyCoordinate::paintLines(const QList<QLineF>& lineList, const QLineF& yAxis
         QList<QPointF> ylist = getPathListFromLine(line, yAxisLine, xAxisLine);
         pathList.append(ylist);
     }
-        QHash<QString, double> pathMap;
-        QList<QLineF> pathLineList;
-        foreach (QPointF point, pathList)
+    QHash<QString, double> pathMap;
+    QList<QLineF> pathLineList;
+    foreach (QPointF point, pathList)
+    {
+        qDebug()<<"yMap insertMulti"<< point.y() << point.x();
+        if (yMap.contains(QString::number(point.y())))
         {
-            qDebug()<<"yMap insertMulti"<< point.y() << point.x();
-            if (yMap.contains(QString::number(point.y())))
-            {
-                qDebug()<<"contains"<< point.y();
-                double v1 = yMap.value(QString::number(point.y()));
-                QPointF start(v1, point.y());
-                QPointF end(point.x(), point.y());
-                QLineF line(start, end);
-                pathLineList.append(line);
-                continue;
-            }
-            yMap.insert(QString::number(point.y()), point.x());
+            qDebug()<<"contains"<< point.y();
+            double v1 = yMap.value(QString::number(point.y()));
+            //            QPointF start(v1, point.y());
+            //            QPointF end(point.x(), point.y());
+            QPointF start(point.x(), point.y());
+            QPointF end(v1, point.y());
+            QLineF line(start, end);
+            pathLineList.append(line);
+            continue;
         }
+        yMap.insert(QString::number(point.y()), point.x());
+    }
+
+
+    QList<QLineF> cornerList = getCornerListFromPathLineList(pathLineList, yAxisLine, xAxisLine);
+    pathLineList.append(cornerList);
     QList<Line> drawPathList = myLinesToMapLines(pathLineList);
     emit paintPathList(drawPathList);
+//    QList<Line> drawCornerList = myLinesToMapLines(cornerList);
+//    emit paintPathList(drawCornerList);
 
     //    return returnPointList;
 }
@@ -1123,3 +1167,93 @@ QList<QPointF> MyCoordinate::getPathListFromLine(const QLineF &line, const QLine
     qDebug()<<"resultPointList size"<<returnPointList.size();
     return returnPointList;
 }
+
+QList<QLineF> MyCoordinate::getCornerListFromPathLineList(const QList<QLineF>& lineList, const QLineF& yAxisLine, const QLineF& xAxisLine)
+{
+    QList<QLineF> returnList;
+    int size = lineList.size();
+    for (int i =1; i < size; ++i)
+    {
+        QLineF first = lineList.at(i - 1);
+        QPointF fp1 = first.p1();
+        QPointF fp2 = first.p2();
+
+        QLineF second = lineList.at(i);
+        QPointF sp1 = second.p1();
+        QPointF sp2 = second.p2();
+        if (i % 2 != 0)
+        {
+            qDebug()<< " i"<<i;
+            qDebug()<<" fp2 x"<<fp2.x() << " sp2. x"<<sp2.x();
+            qDebug()<<" fp1 x" << fp1.x() << "  sp1 x" << sp1.x();
+            double x = 0;
+            if (fp2.x() < sp2.x())
+            {
+                x = sp2.x() + (sp2.x() - fp2.x()) / 2;
+            }
+            else if (fp2.x() > sp2.x())
+            {
+                x = fp2.x() + (fp2.x() - sp2.x()) / 2;
+            }
+            if (x == 0)
+                continue;
+            QPointF point1(x, fp2.y());
+            QLineF xline1;
+            xline1.setP1(fp2);
+            xline1.setP2(point1);
+            returnList.append(xline1);
+            QPointF point2(x, sp2.y());
+            QLineF xline2;
+            xline2.setP1(sp2);
+            xline2.setP2(point2);
+            returnList.append(xline2);
+            QPointF corner(x + gridWidth / 2, (fp2.y() + sp2.y()) / 2);
+            QLineF yline1;
+            yline1.setP1(point1);
+            yline1.setP2(corner);
+            returnList.append(yline1);
+            QLineF yline2;
+            yline2.setP1(point2);
+            yline2.setP2(corner);
+            returnList.append(yline2);
+        }
+        else
+        {
+            double x = 0;
+            if (fp1.x() < sp1.x())
+            {
+                x = fp1.x() - (sp1.x() - fp1.x()) / 2;
+            }
+            else if (fp1.x() > sp1.x())
+            {
+                x = sp1.x() - (fp1.x() - sp1.x()) / 2;
+            }
+            if (x == 0)
+                continue;
+            QPointF point1(x, fp2.y());
+            QLineF xline1;
+            xline1.setP1(fp2);
+            xline1.setP2(point1);
+            returnList.append(xline1);
+            QPointF point2(x, sp2.y());
+            QLineF xline2;
+            xline2.setP1(sp2);
+            xline2.setP2(point2);
+            returnList.append(xline2);
+            QPointF corner(x - gridWidth / 2, (fp2.y() + sp2.y()) / 2);
+            QLineF yline1;
+            yline1.setP1(point1);
+            yline1.setP2(corner);
+            returnList.append(yline1);
+            QLineF yline2;
+            yline2.setP1(point2);
+            yline2.setP2(corner);
+            returnList.append(yline2);
+        }
+
+
+    }
+    return returnList;
+}
+
+

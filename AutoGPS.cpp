@@ -1,4 +1,7 @@
 #include "AutoGPS.h"
+#include "mapcontroller.h"
+#include "masterthread.h"
+#include "camera.h"
 //#include <QApplication>
 #include <ArcGISLocalTiledLayer.h>
 #include <ArcGISRuntime.h>
@@ -11,19 +14,22 @@
 #include <MapGraphicsView.h>
 #include <QFileDialog>
 
-
 static const QString UI_OVERLAY_PATH("qrc:/Resources/qml/MainOverlay.qml");
+
+namespace AutoGPSNAMESPACE{
+using namespace EsriRuntimeQt;
+
 
 AutoGPS::AutoGPS (QWidget *parent):
     QMainWindow(parent),
+    map(new Map()),
     mapGraphicsView(NULL),
     mapController(NULL),
     engine(NULL),
     overlayWidget(NULL),
     overlayUI(NULL),
-    mainMenuUI(NULL),
     context(NULL),
-    thread(this, this),
+    thread(new MasterThread(this)),
     camera(NULL)
 {
 
@@ -31,15 +37,15 @@ AutoGPS::AutoGPS (QWidget *parent):
     this->showMaximized();
     EsriRuntimeQt::ArcGISRuntime::setRenderEngine(EsriRuntimeQt::RenderEngine::OpenGL);
 
-    mapGraphicsView = EsriRuntimeQt::MapGraphicsView::create(map, this);
+    mapGraphicsView = EsriRuntimeQt::MapGraphicsView::create(*map);
     if (!mapGraphicsView)
     {
-        qCritical() << "Unable to create map.";
+        qCritical() << "Unable to create map->";
         return;
     }
-    map.setWrapAroundEnabled(false);
-    map.setEsriLogoVisible(false);
-    map.setMinScale(10);
+    map->setWrapAroundEnabled(false);
+    map->setEsriLogoVisible(false);
+    map->setMinScale(10);
 
     this->setCentralWidget(mapGraphicsView);
     QString tpkPath = QCoreApplication::applicationDirPath() + "/AutoGPS.tpk";
@@ -47,25 +53,25 @@ AutoGPS::AutoGPS (QWidget *parent):
     ArcGISLocalTiledLayer tiledLayer(tpkPath);
     tiledLayer.setName("tiledLayer");
     qDebug()<<" items size"<<mapGraphicsView->items().size();
-    map.addLayer(tiledLayer);
+    map->addLayer(tiledLayer);
     qDebug()<<" items size"<<mapGraphicsView->items().size();
     //    ArcGISTiledMapServiceLayer tiledLayer("http://services.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer");
-    //    map.addLayer(tiledLayer);
+    //    map->addLayer(tiledLayer);
     //    ArcGISLocalTiledLayer tiledLayer("D:/Qt/QtSampleApplication_10.2.3_win32/sdk/samples/data/tpks/Topographic.tpk");
-    //    map.addLayer(tiledLayer);
+    //    map->addLayer(tiledLayer);
 
-    mapController = new MapController(&map, mapGraphicsView, this, this);
-     camera = new Camera(mapGraphicsView, this);
-
-
-    engine = new QDeclarativeEngine(this);
-    context = new QDeclarativeContext(engine->rootContext());
-    context->setContextProperty("serialPortThread", &thread);
-    context->setContextProperty("cameraObject", camera);
+    mapController.reset(new MapController(map.data(), mapGraphicsView, this));
+    camera.reset(new Camera(mapGraphicsView));
 
 
-    QDeclarativeComponent component(engine, QUrl(UI_OVERLAY_PATH), engine);
-    overlayUI = component.create(context);
+    engine.reset(new QDeclarativeEngine());
+    context.reset(new QDeclarativeContext(engine->rootContext()));
+    context->setContextProperty("serialPortThread", thread.data());
+    context->setContextProperty("cameraObject", camera.data());
+
+
+    QDeclarativeComponent component(engine.data(), QUrl(UI_OVERLAY_PATH));
+    overlayUI.reset(component.create(context.data()));
     //    thread.setContext(context);
     if (!overlayUI)
     {
@@ -83,32 +89,32 @@ AutoGPS::AutoGPS (QWidget *parent):
     overlayWidget = new QGraphicsWidget();
     QGraphicsLinearLayout* layout = new QGraphicsLinearLayout(overlayWidget);
     layout->setContentsMargins(0, 0, 0, 0);
-    QGraphicsLayoutItem* qmlUILayout = qobject_cast<QGraphicsLayoutItem*>(overlayUI);
+    QGraphicsLayoutItem* qmlUILayout = qobject_cast<QGraphicsLayoutItem*>(overlayUI.data());
     layout->addItem(qmlUILayout);
     overlayWidget->setLayout(layout);
 
     mapGraphicsView->scene()->addItem(overlayWidget);
 
 
-    connect(overlayUI, SIGNAL(homeClicked()), mapController, SLOT(handleHomeClicked()));
-    connect(overlayUI, SIGNAL(zoomInClicked()), mapController, SLOT(handleZoomIn()));
-    connect(overlayUI, SIGNAL(zoomOutClicked()), mapController, SLOT(handleZoomOut()));
-    connect(overlayUI, SIGNAL(panClicked(QString)), mapController, SLOT(handlePan(QString)));
-    connect(mapController, SIGNAL(positionChanged(QVariant)), overlayUI, SLOT(updateLocation(QVariant)));
-    connect(mapController, SIGNAL(speedChanged(QVariant)), overlayUI, SLOT(updateSpeed(QVariant)));
-    connect(mapController, SIGNAL(headingChanged(QVariant)), overlayUI, SLOT(updateHeading(QVariant)));
-    connect(&thread, SIGNAL(positionChanged(QVariant)), overlayUI, SLOT(updateLocation(QVariant)));
-    connect(&thread, SIGNAL(avaliblePosition(double, double, double)), mapController, SLOT(onAvaliblePosition(double, double, double)));
-    connect(&thread, SIGNAL(timeChanged(QVariant)), overlayUI, SLOT(updateTime(QVariant)));
-    connect(&thread, SIGNAL(speedChanged(QVariant)), overlayUI, SLOT(updateSpeed(QVariant)));
-    connect(&thread, SIGNAL(headingChanged(QVariant)), overlayUI, SLOT(updateHeading(QVariant)));
-    connect(overlayUI, SIGNAL(basemapChanged(QString)), this, SLOT(handleBasemapChanged(QString)));
-    connect(overlayUI, SIGNAL(cameraIndexChanged(int)), camera, SLOT(handleCameraIndexChanged(int)));
-    connect(overlayUI, SIGNAL(captureDisplay(bool)), camera, SLOT(handleCaptureDisplay(bool)));
-    connect(overlayUI, SIGNAL(captureStart(bool)), camera, SLOT(handleCaptureStart(bool)));
-    connect(&thread, SIGNAL(error(QVariant)), overlayUI, SLOT(error(QVariant)));
-    connect(&thread, SIGNAL(paintGeometry(QList<QPointF>)), mapController, SLOT(onPaintGeometry(QList<QPointF>)));
-    mainMenuUI = overlayUI->findChild<QObject*>("mainMenu");
+    connect(overlayUI.data(), SIGNAL(homeClicked()), mapController.data(), SLOT(handleHomeClicked()));
+    connect(overlayUI.data(), SIGNAL(zoomInClicked()), mapController.data(), SLOT(handleZoomIn()));
+    connect(overlayUI.data(), SIGNAL(zoomOutClicked()), mapController.data(), SLOT(handleZoomOut()));
+    connect(overlayUI.data(), SIGNAL(panClicked(QString)), mapController.data(), SLOT(handlePan(QString)));
+    connect(mapController.data(), SIGNAL(positionChanged(QVariant)), overlayUI.data(), SLOT(updateLocation(QVariant)));
+    connect(mapController.data(), SIGNAL(speedChanged(QVariant)), overlayUI.data(), SLOT(updateSpeed(QVariant)));
+    connect(mapController.data(), SIGNAL(headingChanged(QVariant)), overlayUI.data(), SLOT(updateHeading(QVariant)));
+    connect(thread.data(), SIGNAL(positionChanged(QVariant)), overlayUI.data(), SLOT(updateLocation(QVariant)));
+    connect(thread.data(), SIGNAL(avaliblePosition(double, double, double)), mapController.data(), SLOT(onAvaliblePosition(double, double, double)));
+    connect(thread.data(), SIGNAL(timeChanged(QVariant)), overlayUI.data(), SLOT(updateTime(QVariant)));
+    connect(thread.data(), SIGNAL(speedChanged(QVariant)), overlayUI.data(), SLOT(updateSpeed(QVariant)));
+    connect(thread.data(), SIGNAL(headingChanged(QVariant)), overlayUI.data(), SLOT(updateHeading(QVariant)));
+    connect(overlayUI.data(), SIGNAL(basemapChanged(QString)), this, SLOT(handleBasemapChanged(QString)));
+    connect(overlayUI.data(), SIGNAL(cameraIndexChanged(int)), camera.data(), SLOT(handleCameraIndexChanged(int)));
+    connect(overlayUI.data(), SIGNAL(captureDisplay(bool)), camera.data(), SLOT(handleCaptureDisplay(bool)));
+    connect(overlayUI.data(), SIGNAL(captureStart(bool)), camera.data(), SLOT(handleCaptureStart(bool)));
+    connect(thread.data(), SIGNAL(error(QVariant)), overlayUI.data(), SLOT(error(QVariant)));
+    connect(thread.data(), SIGNAL(paintGeometry(QList<QPointF*>)), mapController.data(), SLOT(onPaintGeometry(QList<QPointF*>)));
+    QObject * mainMenuUI = overlayUI->findChild<QObject*>("mainMenu");
     if (mainMenuUI)
     {
         connect(mainMenuUI, SIGNAL(exitClicked()), this, SLOT(close()));
@@ -117,77 +123,76 @@ AutoGPS::AutoGPS (QWidget *parent):
     QObject * serialConfig = overlayUI->findChild<QObject*>("serialConfig");
     if (serialConfig)
     {
-        connect(serialConfig, SIGNAL(readyOpenSerialPort(QVariant)), &thread, SLOT(onReadyOpenSerialPort(QVariant)));
+        connect(serialConfig, SIGNAL(readyOpenSerialPort(QVariant)), thread.data(), SLOT(onReadyOpenSerialPort(QVariant)));
     }
 
     QObject *config = overlayUI->findChild<QObject*>("config");
     if (config)
     {
-        connect(config, SIGNAL(showMeToggled(bool)), mapController, SLOT(handleToggleShowMe(bool)));
-        connect(config, SIGNAL(followMeToggled(bool)), mapController, SLOT(handleToggleFollowMe(bool)));
-        connect(config, SIGNAL(resetMapClicked()), mapController, SLOT(handleResetMap()));
+        connect(config, SIGNAL(showMeToggled(bool)), mapController.data(), SLOT(handleToggleShowMe(bool)));
+        connect(config, SIGNAL(followMeToggled(bool)), mapController.data(), SLOT(handleToggleFollowMe(bool)));
+        connect(config, SIGNAL(resetMapClicked()), mapController.data(), SLOT(handleResetMap()));
     }
-    QObject *geometryPanel = overlayUI->findChild<QObject*>("geometryPanel");
-    if (geometryPanel)
+    QObject *worker = overlayUI->findChild<QObject*>("worker");
+    if (worker)
     {
-        connect(geometryPanel, SIGNAL(pointsToggled(bool)), mapController, SLOT(handlePointsToggled(bool)));
-        connect(geometryPanel, SIGNAL(toLinesClicked()), mapController, SLOT(handleToLinesClicked()));
-     connect(geometryPanel, SIGNAL(toPolygonClicked()), mapController, SLOT(handleToPolygonClicked()));
-        connect(geometryPanel, SIGNAL(clearClicked()), mapController, SLOT(onClearClicked()));
+        connect(worker, SIGNAL(createProjectClicked()), mapController.data(), SLOT(handleCreateProjectClicked()));
+        connect(worker, SIGNAL(pointsToggled(bool)), mapController.data(), SLOT(handlePointsToggled(bool)));
+        connect(worker, SIGNAL(toLinesClicked()), mapController.data(), SLOT(handleToLinesClicked()));
+     connect(worker, SIGNAL(toPolygonClicked()), mapController.data(), SLOT(handleToPolygonClicked()));
+        connect(worker, SIGNAL(clearClicked()), mapController.data(), SLOT(onClearClicked()));
     }
 
 
- record = overlayUI->findChild<QObject*>("record");
+   QObject * record = overlayUI->findChild<QObject*>("record");
     if (record)
     {
-        connect(record, SIGNAL(startRecordClicked()), &thread, SLOT(onStartRecordClicked()));
-        connect(record, SIGNAL(stopAndSaveClicked()), &thread, SLOT(onStopAndSaveClicked()));
-        connect(record, SIGNAL(translateToXmlClicked()), &thread, SLOT(onTranslateToXmlClicked()));
-        connect(record, SIGNAL(selectLogFileClicked()), &thread, SLOT(onSelectLogFileClicked()));
-        connect(record, SIGNAL(xmlStartRecordClicked()), &thread, SLOT(onXmlStartRecordClicked()));
-        connect(record, SIGNAL(xmlStopAndSaveClicked()), &thread, SLOT(onXmlStopAndSaveClicked()));
-        connect(record, SIGNAL(selectXmlFileClicked()), &thread, SLOT(onSelectXmlFileClicked()));
-//        connect(record, SIGNAL(playInSimulatorClicked()), &thread, SLOT(onPlayInSimulatorClicked()));
-        connect(record, SIGNAL(paintGeometryClicked()), &thread, SLOT(onPaintGeometryClicked()));
-        connect(record, SIGNAL(selectPointsToggled(bool)), mapController, SLOT(handleSelectPointsToggled(bool)));
-         connect(record, SIGNAL(paintCropLandClicked()), mapController, SLOT(handlePaintCropLandClicked()));
-        connect(record, SIGNAL(unSelectClicked()), mapController, SLOT(handleUnSelectClicked()));
-        connect(record, SIGNAL(selectStartPointClicked()), mapController, SLOT(handleSelectStartPointClicked()));
-        connect(record, SIGNAL(getPathClicked()), mapController, SLOT(handleGetPathClicked()));
-        connect(record, SIGNAL(toCroplandClicked()), mapController, SLOT(onToCroplandClicked()));
+        connect(record, SIGNAL(startRecordClicked()), thread.data(), SLOT(onStartRecordClicked()));
+        connect(record, SIGNAL(stopAndSaveClicked()), thread.data(), SLOT(onStopAndSaveClicked()));
+        connect(record, SIGNAL(translateToXmlClicked()), thread.data(), SLOT(onTranslateToXmlClicked()));
+        connect(record, SIGNAL(selectLogFileClicked()), thread.data(), SLOT(onSelectLogFileClicked()));
+        connect(record, SIGNAL(xmlStartRecordClicked()), thread.data(), SLOT(onXmlStartRecordClicked()));
+        connect(record, SIGNAL(xmlStopAndSaveClicked()), thread.data(), SLOT(onXmlStopAndSaveClicked()));
+        connect(record, SIGNAL(selectXmlFileClicked()), thread.data(), SLOT(onSelectXmlFileClicked()));
+//        connect(record, SIGNAL(playInSimulatorClicked()), thread.data(), SLOT(onPlayInSimulatorClicked()));
+        connect(record, SIGNAL(paintGeometryClicked()), thread.data(), SLOT(onPaintGeometryClicked()));
+        connect(record, SIGNAL(selectPointsToggled(bool)), mapController.data(), SLOT(handleSelectPointsToggled(bool)));
+         connect(record, SIGNAL(paintCropLandClicked()), mapController.data(), SLOT(handlePaintCropLandClicked()));
+        connect(record, SIGNAL(unSelectClicked()), mapController.data(), SLOT(handleUnSelectClicked()));
+        connect(record, SIGNAL(selectStartPointClicked()), mapController.data(), SLOT(handleSelectStartPointClicked()));
+        connect(record, SIGNAL(getPathClicked()), mapController.data(), SLOT(handleGetPathClicked()));
+        connect(record, SIGNAL(toCroplandClicked()), mapController.data(), SLOT(onToCroplandClicked()));
     }
 
-    connect(&map, SIGNAL(mapReady()), mapController, SLOT(onMapReady()));
-    connect(&map, SIGNAL(mouseWheel(QWheelEvent)), mapController, SLOT(onMouseWheel(QWheelEvent)));
+    connect(map.data(), SIGNAL(mapReady()), mapController.data(), SLOT(onMapReady()));
+    connect(map.data(), SIGNAL(mouseWheel(QWheelEvent)), mapController.data(), SLOT(onMouseWheel(QWheelEvent)));
 
     QTimer* timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateNorthArrow()));
     timer->start(1000 / 24);
 
     // hook up the handler for the mouse click
-    connect(&map, SIGNAL(mousePress(QMouseEvent)), mapController, SLOT(mousePress(QMouseEvent)));
+    connect(map.data(), SIGNAL(mousePress(QMouseEvent)), mapController.data(), SLOT(mousePress(QMouseEvent)));
 
 
 //    QWidget * widget = new QWidget();
 //    widget->setLayoutDirection(leftToRight);
-
-
-     thread.start();
-
+     thread->start();
 }
 
 AutoGPS::~AutoGPS()
 {
+    qDebug()<<"~AutoGPS";
 }
 
 void AutoGPS::updateNorthArrow()
 {
-    QMetaObject::invokeMethod(overlayUI, "updateMapRotation", Q_ARG(QVariant, map.rotation()));
+    QMetaObject::invokeMethod(overlayUI.data(), "updateMapRotation", Q_ARG(QVariant, map->rotation()));
 }
 
 void AutoGPS::resizeEvent(QResizeEvent* event)
 {
-    if (map.isInitialized())
+    if (map->isInitialized())
     {
         QRectF sceneRect = mapGraphicsView->sceneRect();
 //        qDebug()<<"sceneRect height"<<sceneRect.height();
@@ -200,7 +205,7 @@ void AutoGPS::resizeEvent(QResizeEvent* event)
 void AutoGPS::closeEvent(QCloseEvent *event)
 {
 
-    thread.storeSerialConfig();
+    thread->storeSerialConfig();
     event->accept();
 }
 
@@ -223,18 +228,15 @@ void AutoGPS::handleBasemapChanged(QString basemap)
 void AutoGPS::setBasemapFirst()
 {
     qDebug()<<"setBasemapFirst";
-    QStringList layerNames = map.layerNames();
+    QStringList layerNames = map->layerNames();
     if (layerNames.contains("tiledLayer"))
     {
-        Layer layer = map.layer("tiledLayer");
+        Layer layer = map->layer("tiledLayer");
         layer.setVisible(true);
     }
     if (mapController)
     {
-        if (mapController->getSimpleGraphic())
-        {
-            mapController->getSimpleGraphic()->setVisible(true);
-        }
+         mapController->setSimpleVisible(true);
     }
     if (camera)
     {
@@ -245,18 +247,15 @@ void AutoGPS::setBasemapFirst()
 void AutoGPS::setBasemapSecond()
 {
     qDebug()<<"setBasemapSecond";
-    QStringList layerNames = map.layerNames();
+    QStringList layerNames = map->layerNames();
     if (layerNames.contains("tiledLayer"))
     {
-        Layer layer = map.layer("tiledLayer");
+        Layer layer = map->layer("tiledLayer");
         layer.setVisible(false);
     }
     if (mapController)
     {
-        if (mapController->getSimpleGraphic())
-        {
-            mapController->getSimpleGraphic()->setVisible(false);
-        }
+            mapController->setSimpleVisible(true);
     }
 
     if (camera)
@@ -271,3 +270,5 @@ void AutoGPS::setBasemapThird()
 
 }
 
+
+}

@@ -6,7 +6,9 @@
 #include <QStringList>
 #include <QImage>
 #include <QMap>
+#include <QPointer>
 
+QT_BEGIN_NAMESPACE
 class QCamera;
 class QCameraImageCapture;
 class QMediaRecorder;
@@ -18,9 +20,10 @@ namespace EsriRuntimeQt
 {
 class MapGraphicsView;
 }
-using namespace EsriRuntimeQt;
+QT_END_NAMESPACE
+//using namespace EsriRuntimeQt;
 
-
+namespace AutoGPSNAMESPACE{
 
 
 class Camera : public QObject
@@ -28,7 +31,8 @@ class Camera : public QObject
     Q_OBJECT
     //    Q_PROPERTY(QStringList descriptionList READ descriptionList )
 public:
-    Camera(MapGraphicsView * view, QObject* parent = 0);
+    Camera(EsriRuntimeQt::MapGraphicsView * view);
+    ~Camera();
     Q_INVOKABLE QStringList getCameraDescriptionList();
     void setGeometry(const QRectF&  );
     void setVisible(bool);
@@ -42,7 +46,7 @@ public slots:
     void handleCaptureDisplay(bool);
     void handleCaptureStart(bool);
 private:
-    MapGraphicsView* mapGraphicsView;
+    QPointer<EsriRuntimeQt::MapGraphicsView> mapGraphicsView;
     QStringList cameraDescriptionList;
     //    QStackedWidget* widget;
     QList<QCamera*> cameraList;
@@ -56,5 +60,5 @@ private:
 };
 
 
-
+}
 #endif // CAMERA_H

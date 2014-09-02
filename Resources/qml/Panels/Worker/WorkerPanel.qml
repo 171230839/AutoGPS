@@ -2,7 +2,7 @@ import QtQuick 1.1
 import "../../Controls"
 
 Panel{
-
+    signal createProjectClicked()
     property Stack stack
     property Panel geometryPanel
 //    property Panel pathsPanel
@@ -13,7 +13,7 @@ Panel{
     onGoBack: stack.removePanel()
     delegate: MultiDelegate{}
     model:[
-        ModelObject { text: "get Geometry "; onNoArgModelSignal: { stack.addPanel(geometryPanel)}}
+        ModelObject { text: "Create Project"; Component.onCompleted: noArgModelSignal.connect(workerPanel.createProjectClicked); onNoArgModelSignal: { stack.addPanel(geometryPanel)}}
 //        ModelObject { text: "get Paths"; onNoArgModelSignal: { stack.addPanel(pathsPanel)}}
     ]
 

@@ -11,7 +11,7 @@ Item{
     signal xmlStartRecordClicked()
     signal  xmlStopAndSaveClicked()
     signal selectXmlFileClicked()
-//    signal playInSimulatorClicked()
+
     signal paintGeometryClicked()
     signal toCroplandClicked()
 

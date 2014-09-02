@@ -1,47 +1,52 @@
 #ifndef MAPCONTROLLER_H
 #define MAPCONTROLLER_H
 
-#include <QObject>
-#include "simplegraphicoverlay.h"
-#include <GraphicsLayer.h>
-#include <Point.h>
 
-#include <Line.h>
-using namespace EsriRuntimeQt;
+#include <QObject>
+#include <QVariant>
+#include <QMouseEvent>
+#include <QWheelEvent>
+#include <QPointer>
+
+QT_BEGIN_NAMESPACE
+
 namespace EsriRuntimeQt
 {
 class Point;
 class MapGraphicsView;
 class Map;
 class GraphicsLayer;
-
+class Line;
+class Envelope;
 }
+namespace AutoGPSNAMESPACE{
+class SimpleGraphicOverlay;
+}
+QT_END_NAMESPACE
+namespace AutoGPSNAMESPACE{
 class MapController : public QObject
 {
     Q_OBJECT
 public:
-    explicit MapController(Map* inputMap, MapGraphicsView *inputGraphicsView, QWidget*,QObject* parent = 0);
+    explicit MapController(EsriRuntimeQt::Map* inputMap, EsriRuntimeQt::MapGraphicsView *inputGraphicsView, QWidget*);
     ~MapController();
-
-    SimpleGraphicOverlay*  getSimpleGraphic() { return this->drawingOverlay;}
+    void setSimpleVisible(bool);
 private:
-    Map* map;
-    MapGraphicsView* mapGraphicsView;
-    QWidget* widget;
+    QPointer<EsriRuntimeQt::Map> map;
+    QPointer<EsriRuntimeQt::MapGraphicsView> mapGraphicsView;
+    QPointer<QWidget> widget;
 
-    GraphicsLayer  pointsLayer;
-    Point ownshipStartingMapPoint;
-    Point currentMapPoint;
+    QScopedPointer<EsriRuntimeQt::GraphicsLayer> pointsLayer;
+    QScopedPointer<EsriRuntimeQt::Point> ownshipStartingMapPoint;
+    QScopedPointer<EsriRuntimeQt::Point> currentMapPoint;
     bool showOwnship, followOwnship;
     bool isMapReady;
 
-    SimpleGraphicOverlay* drawingOverlay;
-
+    QScopedPointer<SimpleGraphicOverlay> drawingOverlay;
     double originalScale;
-    Envelope originalExtent;
-
+    QScopedPointer<EsriRuntimeQt::Envelope> originalExtent;
     bool bPoints;
-    QList<Point> pointList;
+    QList<EsriRuntimeQt::Point*> pointList;
     bool readyPointList;
 
     qint64 graphicId;
@@ -49,17 +54,16 @@ private:
     bool bSelectPoints;
     bool bTiledLayerVisible;
 
-    GraphicsLayer paintLayer;
-    QStringList pointListToMGRS(const QList<Point>&);
+    QScopedPointer<EsriRuntimeQt::GraphicsLayer> paintLayer;
+    QStringList pointListToMGRS(const QList<EsriRuntimeQt::Point>&);
     void paintMgrsGrid(QString &);
-    Point MGRSToMapPoint(const QString&);
-    //    void paintGridItem(const QList<Point>&);
+     EsriRuntimeQt::Point MGRSToMapPoint(const QString&);
     void mgrsListToLines(const QStringList&, const QStringList&);
     qint64 cropLandGraphicId;
     bool bSelectStartPoint;
-    QList<Point> cropLandPointList;
-    Point startPoint;
-    Point getXAxisPoint(const QList<Point>& list, int order);
+    QList<EsriRuntimeQt::Point*> cropLandPointList;
+    QScopedPointer<EsriRuntimeQt::Point> startPoint;
+    EsriRuntimeQt::Point* getXAxisPoint(const QList<EsriRuntimeQt::Point*>& list, int order);
     QString projectName;
 
 signals:
@@ -83,7 +87,7 @@ public slots:
     void onAvaliblePosition(double, double, double);
     void handlePointsToggled(bool);
     void handleToLinesClicked();
-    //    void handleOkClicked();
+    void handleCreateProjectClicked();
     void handleToPolygonClicked();
     void onClearClicked();
     void mousePress(QMouseEvent);
@@ -92,47 +96,13 @@ public slots:
     void handlePaintCropLandClicked();
     void handleUnSelectClicked();
     void onMouseWheel(QWheelEvent);
-    void onPaintGeometry(const QList<QPointF> &);
+    void onPaintGeometry(const QList<QPointF*> &);
     void handleSelectStartPointClicked();
-    void onPaintLineList(QList<Line>);
-    void onPaintPathList(QList<Line>);
-    void onPaintCornerList(QList<Line>);
+    void onPaintLineList(QList<EsriRuntimeQt::Line*>);
+    void onPaintPathList(QList<EsriRuntimeQt::Line*>);
+    void onPaintCornerList(QList<EsriRuntimeQt::Line*>);
     void onToCroplandClicked();
 };
 
-class MyCoordinate : public QObject
-{
-    Q_OBJECT
-public:
-    MyCoordinate(const Point& origin, const Point& horizontal, double gridWidth, QObject * parent = 0);
-
-    void paintGrid(const QList<Point>& pointList);
-private:
-    QPointF mapPointToMyCoordinate(const QPointF& );
-    QList<QPointF> mapPointsToMyCoordinate(const QList<QPointF>&);
-    QList<QLineF> pointListToLines(const QList<QPointF> &);
-    void  paintLines(const QList<QLineF>& lineList, const QLineF &, const QLineF&);
-    QList<QPointF> getYPointListFromLine(const QLineF& , const QLineF&, const QLineF&);
-    QList<QPointF> getXPointListFromLine(const QLineF& , const QLineF&, const QLineF&);
-    QLineF getXAxisLineFromList(const QList<double> &);
-    QLineF getYAxisLineFromList(const QList<double>&);
-    QList<Line> myLinesToMapLines(const QList<QLineF> &lineList);
-    Point myPointToMapPoint(const QPointF & point);
-    QList<QPointF> getPathListFromLine(const QLineF &line, const QLineF& yAxisLine, const QLineF& xAxisLine);
-    QList<QLineF> getCornerListFromPathLineList(const QList<QLineF>&, const QLineF&, const QLineF&);
-private:
-    QPointF origin;
-    QPointF horizontal;
-    //    QLineF xAxisLine;
-    double gridWidth;
-    double horAngle;
-    double yAxisMax;
-    QList<double> yAxisList;
-    QList<double> xAxisList;
-signals:
-    void paintLineList(QList<Line>);
-    void paintPathList(QList<Line>);
-    void paintCornerList(QList<Line>);
-};
-
+}
 #endif // MAPCONTROLLER_H

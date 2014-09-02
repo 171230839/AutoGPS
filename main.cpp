@@ -11,6 +11,7 @@
 // See the Sample code usage restrictions document for further information.
 //
 
+
 #include "AutoGPS.h"
 #include <QApplication>
 #include <QTranslator>
@@ -28,7 +29,7 @@ int main(int argc, char *argv[])
     qtTranslator.load("myapp.qm");
     app.installTranslator(&qtTranslator);
 
-    AutoGPS applicationWindow;
+    AutoGPSNAMESPACE::AutoGPS applicationWindow;
 
     applicationWindow.show();
 

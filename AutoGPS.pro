@@ -14,19 +14,20 @@
 TARGET = AutoGPS 
 TEMPLATE = app
 
-QT +=  opengl xml network declarative
+QT += gui core opengl xml network declarative
 
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets serialport multimediawidgets
 }
+
 #TRANSLATIONS = myapp.ts
 DESTDIR = ./
+
 #release:DEFINES += QT_NO_WARNING_OUTPUT\
 #                   QT_NO_DEBUG_OUTPUT
-## Opencv
+
+##-------------- Opencv
 #INCLUDEPATH += D:/opencv/build/include
-
-
 #CONFIG(debug,debug|release) {
 #LIBS += -LD:/opencv/build/x86/vc11/lib \
 #    -lopencv_core249d \
@@ -42,15 +43,22 @@ DESTDIR = ./
 #    -lopencv_features2d249 \
 #    -lopencv_calib3d249
 #}
+# --------------------
+##---------------VLD   对vs2012支持不够
+#INCLUDEPATH += $$quote(D:/Program Files/Visual Leak Detector/include)
+#LIBS += -L$$quote(D:/Program Files/Visual Leak Detector/lib/Win32) \
+#    -lvld
+##---------------------
 
 
-# ------
+
+
 # After installing the Runtime SDK for Qt you'll need to copy the
 # esri_runtime_qt_10_2_3.prf file from your qt10.2.3/sdk/ideintegration folder
 # to your Qt SDK's mkspecs/features folder in order for Qt Creator to locate 
 # the ArcGIS Runtime SDK for Qt header files and libraries.
 #
-CONFIG += c++11 esri_runtime_qt_10_2_3 
+CONFIG +=  c++11 esri_runtime_qt_10_2_3
 
 win32:CONFIG += \
   embed_manifest_exe
@@ -62,14 +70,16 @@ SOURCES += \
     mapcontroller.cpp \
     simplegraphicoverlay.cpp \
     masterthread.cpp \
-    camera.cpp
+    camera.cpp \
+    mycoordinate.cpp
 
 HEADERS += \
 	AutoGPS.h \
     mapcontroller.h \
     simplegraphicoverlay.h \
     masterthread.h \
-    camera.h
+    camera.h \
+    mycoordinate.h
 
 FORMS +=
 

@@ -46,22 +46,20 @@
 #include <QMutex>
 #include <QStringList>
 #include <QVariant>
-class QXmlStreamWriter;
 #include <QXmlStreamReader>
+#include <QPointer>
+QT_BEGIN_NAMESPACE
+class QXmlStreamWriter;
 class QWidget;
-//! [0]
+QT_END_NAMESPACE
+
+namespace AutoGPSNAMESPACE{
+
 class MasterThread : public QThread
 {
     Q_OBJECT
-    //    Q_PROPERTY(QStringList portList READ portList NOTIFY portListChanged)
-    //    Q_PROPERTY(QString qPortName READ qPortName NOTIFY qPortNameChanged)
-    //    Q_PROPERTY(QString qBaudRate READ qBaudRate NOTIFY qBaudRateChanged)
-    //    Q_PROPERTY(QString qDataBits READ qDataBits NOTIFY qDataBitsChanged)
-    //    Q_PROPERTY(QString qStopBits READ qStopBits NOTIFY qStopBitsChanged)
-    //    Q_PROPERTY(QString qParity READ qParity NOTIFY qParityChanged)
-    //    Q_PROPERTY(QString qTimeout READ qTimeout NOTIFY qTimeoutChanged)
 public:
-    MasterThread(QObject*parent = 0, QWidget* widget= 0);
+    MasterThread(QWidget* widget= 0);
     ~MasterThread();
     void run();
 
@@ -93,7 +91,7 @@ signals:
     void headingChanged(QVariant);
     //    void stateChanged(QVariant);
     void avaliblePosition(double, double, double);
-    void paintGeometry(const QList<QPointF> &);
+    void paintGeometry(const QList<QPointF*> &);
 
 private:
     QString portName;
@@ -104,14 +102,12 @@ private:
     int parity;
     int waitTimeout;
     QMutex mutex;
-    //    QWaitCondition cond;
+
     bool quit;
     QStringList m_portList;
 
     void decoding(QString&, bool, QXmlStreamWriter*);
-    //    QString decimalDegreesToDMS(double coord);
     QString DMTODMS(QString );
-    //    QString getDM(QString);
     double DMTodecimalDegrees(QString);
     bool bStartRecord;
     void itemDecoding(QString&, bool,QXmlStreamWriter*);
@@ -122,16 +118,16 @@ private:
     bool bXmlStartRecord;
     bool bXmlStopAndSave;
     QString xmlFileName;
-    QWidget * widget;
+    QPointer<QWidget> widget;
     QString getCurrentDateString();
     QString getCurrentTimeString();
     QString getCurrentDateTimeString();
     QXmlStreamReader reader;
-    QList<QPointF> pointFList;
+    QList<QPointF*> pointFList;
     QStringList timeList;
-    void parseXML(QXmlStreamReader&, QList<QPointF> &, QStringList&);
+    void parseXML(QXmlStreamReader&, QList<QPointF*> &, QStringList&);
     bool bXmlFileSelect;
-    void readLog(QXmlStreamReader& reader, QList<QPointF> &pointFList, QStringList& timeList);
+    void readLog(QXmlStreamReader& reader, QList<QPointF*> &pointFList, QStringList& timeList);
 
 public slots:
     void onReadyOpenSerialPort(QVariant);
@@ -146,6 +142,6 @@ public slots:
     void onPaintGeometryClicked();
 
 };
-//! [0]
 
+}
 #endif // MASTERTHREAD_H

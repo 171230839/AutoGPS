@@ -13,20 +13,29 @@
 #ifndef AUTOGPS_H
 #define AUTOGPS_H
 
-#include <Map.h>
-#include <QMainWindow>
-#include "mapcontroller.h"
-#include "masterthread.h"
-#include "camera.h"
 
+#include <QMainWindow>
+
+
+QT_BEGIN_NAMESPACE
 class QDeclarativeEngine;
 class QGraphicsWidget;
 class QDeclarativeContext;
 namespace EsriRuntimeQt
 {
 class MapGraphicsView;
+class Map;
 }
-using namespace EsriRuntimeQt;
+namespace AutoGPSNAMESPACE
+{
+class MapController;
+class MasterThread;
+class Camera;
+}
+
+QT_END_NAMESPACE
+//using AutoGPSNAMESPACE;
+namespace AutoGPSNAMESPACE{
 
 
 class AutoGPS : public QMainWindow
@@ -42,18 +51,16 @@ public slots:
     void  handleBasemapChanged(QString);
 
 private:
-    EsriRuntimeQt::Map map;
-    EsriRuntimeQt::MapGraphicsView* mapGraphicsView;
+    QScopedPointer<EsriRuntimeQt::Map> map;
+     EsriRuntimeQt::MapGraphicsView* mapGraphicsView;
 //    ArcGISLocalTiledLayer tiledLayer;
-    MapController* mapController;
-    QDeclarativeEngine* engine;
+    QScopedPointer<MapController> mapController;
+    QScopedPointer<QDeclarativeEngine> engine;
     QGraphicsWidget* overlayWidget;
-    QObject* overlayUI;
-    QObject* mainMenuUI;
-    QDeclarativeContext * context ;
-    MasterThread thread;
-    Camera* camera;
- QObject *record ;
+    QScopedPointer<QObject> overlayUI;
+    QScopedPointer<QDeclarativeContext> context ;
+    QScopedPointer<MasterThread> thread;
+    QScopedPointer<Camera> camera;
     void setBasemapFirst();
     void setBasemapSecond();
     void setBasemapThird();
@@ -63,5 +70,6 @@ protected:
 
 };
 
+}
 #endif // AUTOGPS_H
 

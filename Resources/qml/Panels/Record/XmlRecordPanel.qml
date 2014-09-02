@@ -6,7 +6,7 @@ Panel{
     signal xmlStartRecordClicked()
     signal  xmlStopAndSaveClicked()
     signal selectXmlFileClicked()
-
+    signal toCroplandClicked()
     signal paintGeometryClicked()
 
     id: xmlRecordPanel
@@ -23,8 +23,8 @@ Panel{
         ModelObject { text: "Stop and Save"; Component.onCompleted: noArgModelSignal.connect(xmlRecordPanel.xmlStopAndSaveClicked);},
         ModelObject { text: "Select Xml File"; Component.onCompleted: noArgModelSignal.connect(xmlRecordPanel.selectXmlFileClicked);},
         ModelObject { text: "Paint geometry"; Component.onCompleted: noArgModelSignal.connect(xmlRecordPanel.paintGeometryClicked);},
-        ModelObject { text: "To CropLand "; Component.onCompleted: noArgModelSignal.connect(xmlRecordPanel.paintGeometryClicked);}
-//            onNoArgModelSignal: {stack.addPanel(cropLandPanel)}}
+        ModelObject { text: "Select Project "; Component.onCompleted: noArgModelSignal.connect(xmlRecordPanel.toCroplandClicked);
+            onNoArgModelSignal: {stack.addPanel(cropLandPanel)}}
 //        ModelObject { text: "To Route"; onNoArgModelSignal: { stack.addPanel(routePanel)}}
      ]
 }

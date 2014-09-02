@@ -4,10 +4,17 @@ import "../Controls"
 
 
 Item{
+     signal createProjectClicked()
+    signal okClicked()
+    signal pointsToggled(bool state)
+    signal toLinesClicked()
+    signal toPolygonClicked()
+    signal clearClicked()
     property Panel panel
     property Stack stack
     id: worker
     panel: workerPanel
+    objectName: "worker"
 
     WorkerPanel
     {
@@ -15,7 +22,10 @@ Item{
         stack: worker.stack
          anchors.fill: parent
         geometryPanel: geometryPanel
-//        pathsPanel: pathsPanel
+        Component.onCompleted:
+        {
+            createProjectClicked.connect(worker.createProjectClicked)
+        }
     }
 
     GeometryPanel
@@ -23,7 +33,14 @@ Item{
         id: geometryPanel
         stack: worker.stack
          anchors.fill: parent
-//         pathsPanel: pathsPanel
+         Component.onCompleted:
+         {
+             okClicked.connect(worker.okClicked)
+            pointsToggled.connect(worker.pointsToggled)
+             toLinesClicked.connect(worker.toLinesClicked)
+             toPolygonClicked.connect(worker.toPolygonClicked)
+            clearClicked.connect(worker.clearClicked)
+         }
     }
 
 //    PathsPanel

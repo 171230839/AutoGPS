@@ -1,28 +1,15 @@
-/*
- | Copyright 2012-2013 Esri
- |
- | Licensed under the Apache License, Version 2.0 (the "License");
- | you may not use this file except in compliance with the License.
- | You may obtain a copy of the License at
- |
- |    http://www.apache.org/licenses/LICENSE-2.0
- |
- | Unless required by applicable law or agreed to in writing, software
- | distributed under the License is distributed on an "AS IS" BASIS,
- | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- | See the License for the specific language governing permissions and
- | limitations under the License.
- */
 
+#include "simplegraphicoverlay.h"
 #include <QPainter>
 #include <Point.h>
-#include "simplegraphicoverlay.h"
 #include <MapGraphicsView.h>
-//#include <Geometry.h>
 #include <QGraphicsView>
 
-SimpleGraphicOverlay::SimpleGraphicOverlay(QGraphicsItem *parent):
-    QGraphicsWidget(parent), m_pMapGraphicsView(0)
+namespace AutoGPSNAMESPACE{
+using namespace EsriRuntimeQt;
+
+SimpleGraphicOverlay::SimpleGraphicOverlay():
+    m_pMapGraphicsView(0)
     {
         rotation = 0.0;
         screenX = -1;
@@ -33,6 +20,11 @@ SimpleGraphicOverlay::SimpleGraphicOverlay(QGraphicsItem *parent):
         setAutoFillBackground(false);
         this->setObjectName("SimpleGraphicOverlay");
     }
+
+ SimpleGraphicOverlay::~SimpleGraphicOverlay()
+{
+
+}
 
 QRectF SimpleGraphicOverlay::boundingRect() const
 {
@@ -90,5 +82,7 @@ void SimpleGraphicOverlay::paint(QPainter *painter, const QStyleOptionGraphicsIt
     painter->translate(screenX, screenY);
     painter->rotate(rotation - mapRotation);
     painter->drawImage(QPoint(-halfImageWidth, -halfImageHeight), image);
+
+}
 
 }

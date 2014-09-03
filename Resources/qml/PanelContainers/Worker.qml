@@ -5,7 +5,7 @@ import "../Controls"
 
 Item{
      signal createProjectClicked()
-    signal okClicked()
+    signal saveProjectClicked()
     signal pointsToggled(bool state)
     signal toLinesClicked()
     signal toPolygonClicked()
@@ -35,7 +35,7 @@ Item{
          anchors.fill: parent
          Component.onCompleted:
          {
-             okClicked.connect(worker.okClicked)
+             saveProjectClicked.connect(worker.saveProjectClicked)
             pointsToggled.connect(worker.pointsToggled)
              toLinesClicked.connect(worker.toLinesClicked)
              toPolygonClicked.connect(worker.toPolygonClicked)

@@ -49,12 +49,19 @@ MapController::MapController(Map* inputMap,
 
 MapController::~MapController()
 {
+    if (pointList.size() > 0)
+    {
+        if (pointList.count(pointList.first()) > 1)
+        {
+            pointList.pop_front();
+        }
+    }
 
     qDeleteAll(pointList);
     pointList.clear();
     qDeleteAll(cropLandPointList);
     cropLandPointList.clear();
-    qDebug()<<"~MapController";
+    qDebug()<<"~MapController ok";
 }
 
 void MapController::onMapReady()
@@ -277,23 +284,7 @@ void MapController::handleToLinesClicked()
     }
 }
 
-//void MapController::handleOkClicked()
-//{
-//    qDebug()<<"handleOkClicked()";
-//    if (bPoints&& (graphicId != 0))
-//    {
-//        pointsLayer.removeGraphic(graphicId);
-//        pointList.pop_back();
-//        bPoints = false;
-//    }
-//    //    map->removeLayer("tiledLayer");
-//    if (!readyPointList)
-//    {
-//        pointList.append(pointList.first());
-//        readyPointList = true;
-//    }
-//    preparePaths();
-//}
+
 
 void MapController::handleToPolygonClicked()
 {
@@ -382,6 +373,7 @@ void MapController::mousePress(QMouseEvent mouseEvent)
 
 void MapController::onClearClicked()
 {
+    qDeleteAll(pointList);
     pointList.clear();
     pointsLayer->removeAll();
     readyPointList = false;
@@ -414,6 +406,7 @@ void MapController::handleSelectPointsToggled(bool state)
     bSelectPoints = state;
     if (state)
     {
+        qDeleteAll(cropLandPointList);
         cropLandPointList.clear();
     }
 }
@@ -432,8 +425,7 @@ void MapController::handlePaintCropLandClicked()
     tmpList.append(temp);
     EsriRuntimeQt::Polygon polygon(tmpList);
     cropLandGraphicId = paintLayer->addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor(0, 180, 0, 200))));
-    temp.clear();
-    tmpList.clear();
+
 }
 
 void MapController::handleGetPathClicked()
@@ -525,6 +517,7 @@ void MapController::handleUnSelectClicked()
         paintLayer->removeGraphic(cropLandGraphicId);
     }
     bSelectStartPoint = false;
+    qDeleteAll(cropLandPointList);
     cropLandPointList.clear();
     startPoint->clear();
 }
@@ -611,10 +604,8 @@ void MapController::onPaintGeometry(const QList<QPointF*> &pointFList)
     {
         paintMgrsGrid(str);
     }
-    pointList.clear();
-    tmpList.clear();
-    mgrsList.clear();
-    newMgrsList.clear();
+
+
 }
 
 QStringList MapController::pointListToMGRS(const QList<Point> &pointList)
@@ -819,7 +810,10 @@ void MapController::onToCroplandClicked()
     qDebug()<<"projectName"<<projectName;
     if ((projectName == dirPath) || (!projectName.contains(dirPath)))
     {
+        emit error(QVariant::fromValue(tr("Warning unable to select project with path %1")
+                                       .arg(projectName)));
         projectName = "";
+        return;
     }
 }
 
@@ -841,13 +835,52 @@ void MapController::handleCreateProjectClicked()
     {
         dir.mkdir("Projects");
     }
-    QString project = QFileDialog::getSaveFileName(widget, tr("Create Project"),
-                                                    dirPath + "/Projects");
+    projectPath = QFileDialog::getSaveFileName(widget, tr("Create Project"),
+                                               dirPath + "/Projects");
     qDebug()<<"project";
-    if (!dir.exists(project))
+    if ((projectPath == dirPath) || (!projectPath.contains(dirPath)))
     {
-          dir.mkdir(project);
+        emit error(QVariant::fromValue(tr("Warning unable to create project with path %1")
+                                       .arg(projectPath)));
+        projectPath = "";
+        return;
     }
+    if (!dir.exists(projectPath))
+    {
+        dir.mkdir(projectPath);
+    }
+}
+
+void MapController::handleSaveProjectClicked()
+{
+    if (projectPath.isEmpty())
+        return;
+    QString filePath = projectPath + "/geometry.xml";
+    QByteArray logData;
+    QXmlStreamWriter logXml(&logData);
+    logXml.setAutoFormatting(true);
+    logXml.writeStartDocument();
+    logXml.writeStartElement("Geometrys");
+    pointList.pop_back();
+    foreach(Point* point, pointList)
+    {
+        logXml.writeStartElement("Point");
+        logXml.writeAttribute("x", QString("%1").arg(point->x(), 0, 'g', 11));
+        logXml.writeAttribute("y", QString("%1").arg(point->y(), 0, 'g', 11));
+        logXml.writeEndElement();
+    }
+    logXml.writeEndElement();
+    logXml.writeEndDocument();
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        qDebug()<<"file cannot open"<< filePath;
+        emit error(QVariant::fromValue(tr("Can't open xml file %1")
+                                       .arg(filePath)));
+        return;
+    }
+    file.write(logData);
+    file.close();
 
 }
 

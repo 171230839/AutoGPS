@@ -103,6 +103,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(mapController.data(), SIGNAL(positionChanged(QVariant)), overlayUI.data(), SLOT(updateLocation(QVariant)));
     connect(mapController.data(), SIGNAL(speedChanged(QVariant)), overlayUI.data(), SLOT(updateSpeed(QVariant)));
     connect(mapController.data(), SIGNAL(headingChanged(QVariant)), overlayUI.data(), SLOT(updateHeading(QVariant)));
+   connect(mapController.data(), SIGNAL(error(QVariant)), overlayUI.data(), SLOT(error(QVariant)));
     connect(thread.data(), SIGNAL(positionChanged(QVariant)), overlayUI.data(), SLOT(updateLocation(QVariant)));
     connect(thread.data(), SIGNAL(avaliblePosition(double, double, double)), mapController.data(), SLOT(onAvaliblePosition(double, double, double)));
     connect(thread.data(), SIGNAL(timeChanged(QVariant)), overlayUI.data(), SLOT(updateTime(QVariant)));
@@ -139,8 +140,9 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(worker, SIGNAL(createProjectClicked()), mapController.data(), SLOT(handleCreateProjectClicked()));
         connect(worker, SIGNAL(pointsToggled(bool)), mapController.data(), SLOT(handlePointsToggled(bool)));
         connect(worker, SIGNAL(toLinesClicked()), mapController.data(), SLOT(handleToLinesClicked()));
-     connect(worker, SIGNAL(toPolygonClicked()), mapController.data(), SLOT(handleToPolygonClicked()));
+        connect(worker, SIGNAL(toPolygonClicked()), mapController.data(), SLOT(handleToPolygonClicked()));
         connect(worker, SIGNAL(clearClicked()), mapController.data(), SLOT(onClearClicked()));
+        connect(worker, SIGNAL(saveProjectClicked()), mapController.data(), SLOT(handleSaveProjectClicked()));
     }
 
 

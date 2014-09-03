@@ -11,16 +11,18 @@
 // See the Sample code usage restrictions document for further information.
 //
 
-
+//#include "vld.h"
 #include "AutoGPS.h"
 #include <QApplication>
 #include <QTranslator>
 
 
+
+
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
 
+    QApplication app(argc, argv);
     app.setOrganizationName("AutoGPS");
     app.setApplicationName("AutoGPS");
 

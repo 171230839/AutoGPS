@@ -65,11 +65,13 @@ private:
     QScopedPointer<EsriRuntimeQt::Point> startPoint;
     EsriRuntimeQt::Point* getXAxisPoint(const QList<EsriRuntimeQt::Point*>& list, int order);
     QString projectName;
+    QString projectPath;
 
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);
     void speedChanged(QVariant newSpeed);
+    void error( QVariant );
 public slots:
     void onMapReady();
 
@@ -102,6 +104,7 @@ public slots:
     void onPaintPathList(QList<EsriRuntimeQt::Line*>);
     void onPaintCornerList(QList<EsriRuntimeQt::Line*>);
     void onToCroplandClicked();
+    void handleSaveProjectClicked();
 };
 
 }

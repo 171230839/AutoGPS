@@ -66,12 +66,16 @@ private:
     EsriRuntimeQt::Point* getXAxisPoint(const QList<EsriRuntimeQt::Point*>& list, int order);
     QString projectName;
     QString projectPath;
-
+    bool bSelectProject;
+    QScopedPointer<EsriRuntimeQt::GraphicsLayer> projectLayer;
+    QMap<QString, qint64> projectMap;
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);
     void speedChanged(QVariant newSpeed);
     void error( QVariant );
+    void processProject(QString);
+    void addCroplandPanel();
 public slots:
     void onMapReady();
 
@@ -100,11 +104,12 @@ public slots:
     void onMouseWheel(QWheelEvent);
     void onPaintGeometry(const QList<QPointF*> &);
     void handleSelectStartPointClicked();
-    void onPaintLineList(QList<EsriRuntimeQt::Line*>);
-    void onPaintPathList(QList<EsriRuntimeQt::Line*>);
-    void onPaintCornerList(QList<EsriRuntimeQt::Line*>);
-    void onToCroplandClicked();
+    void onPaintLineList(const QList<EsriRuntimeQt::Line*>&);
+    void onPaintPathList(const QList<EsriRuntimeQt::Line*>&);
+//    void onPaintCornerList(QList<EsriRuntimeQt::Line*>);
+
     void handleSaveProjectClicked();
+    void onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString);
 };
 
 }

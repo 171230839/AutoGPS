@@ -14,11 +14,11 @@
 #include <MapGraphicsView.h>
 #include <QFileDialog>
 
-static const QString UI_OVERLAY_PATH("qrc:/Resources/qml/MainOverlay.qml");
+
 
 namespace AutoGPSNAMESPACE{
 using namespace EsriRuntimeQt;
-
+static const QString UI_OVERLAY_PATH("qrc:/Resources/qml/MainOverlay.qml");
 
 AutoGPS::AutoGPS (QWidget *parent):
     QMainWindow(parent),
@@ -114,7 +114,11 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(overlayUI.data(), SIGNAL(captureDisplay(bool)), camera.data(), SLOT(handleCaptureDisplay(bool)));
     connect(overlayUI.data(), SIGNAL(captureStart(bool)), camera.data(), SLOT(handleCaptureStart(bool)));
     connect(thread.data(), SIGNAL(error(QVariant)), overlayUI.data(), SLOT(error(QVariant)));
-    connect(thread.data(), SIGNAL(paintGeometry(QList<QPointF*>)), mapController.data(), SLOT(onPaintGeometry(QList<QPointF*>)));
+    connect(thread.data(), SIGNAL(paintGeometry(const QList<QPointF*>&)), mapController.data(), SLOT(onPaintGeometry(const QList<QPointF*>&)));
+    connect(thread.data(), SIGNAL(paintProject(const QList<EsriRuntimeQt::Point*>&, QString)), mapController.data(), SLOT(onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString)));
+    connect(mapController.data(), SIGNAL(processProject(QString)), thread.data(), SLOT(onProcessProject(QString)));
+
+
     QObject * mainMenuUI = overlayUI->findChild<QObject*>("mainMenu");
     if (mainMenuUI)
     {
@@ -157,13 +161,16 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(record, SIGNAL(xmlStopAndSaveClicked()), thread.data(), SLOT(onXmlStopAndSaveClicked()));
         connect(record, SIGNAL(selectXmlFileClicked()), thread.data(), SLOT(onSelectXmlFileClicked()));
 //        connect(record, SIGNAL(playInSimulatorClicked()), thread.data(), SLOT(onPlayInSimulatorClicked()));
-        connect(record, SIGNAL(paintGeometryClicked()), thread.data(), SLOT(onPaintGeometryClicked()));
+//        connect(record, SIGNAL(paintGeometryClicked()), thread.data(), SLOT(onPaintGeometryClicked()));
+        connect(record, SIGNAL(selectProjectClicked()), thread.data(), SLOT(onSelectProjectClicked()));
+        connect(mapController.data(), SIGNAL(addCroplandPanel()), record, SLOT(onAddCropLandPanel()));
+
+
         connect(record, SIGNAL(selectPointsToggled(bool)), mapController.data(), SLOT(handleSelectPointsToggled(bool)));
          connect(record, SIGNAL(paintCropLandClicked()), mapController.data(), SLOT(handlePaintCropLandClicked()));
         connect(record, SIGNAL(unSelectClicked()), mapController.data(), SLOT(handleUnSelectClicked()));
         connect(record, SIGNAL(selectStartPointClicked()), mapController.data(), SLOT(handleSelectStartPointClicked()));
         connect(record, SIGNAL(getPathClicked()), mapController.data(), SLOT(handleGetPathClicked()));
-        connect(record, SIGNAL(toCroplandClicked()), mapController.data(), SLOT(onToCroplandClicked()));
     }
 
     connect(map.data(), SIGNAL(mapReady()), mapController.data(), SLOT(onMapReady()));

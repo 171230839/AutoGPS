@@ -13,9 +13,9 @@ MyCoordinate::MyCoordinate(const EsriRuntimeQt::Point* origin, const EsriRuntime
       horizontal(new QPointF(horizontal->toQPointF())),
       gridWidth(gridWidth)
 {
-//    qDebug()<<QString("origin x: %1 y: %2").arg(origin.x(), 0, 'g', 14).arg(origin.y(), 0, 'g', 14);
+    qDebug()<<QString("origin x: %1 y: %2").arg(origin->x(), 0, 'g', 14).arg(origin->y(), 0, 'g', 14);
 
-//    qDebug()<<QString("horizontal x: %1 y: %2").arg(horizontal.x(), 0, 'g', 14).arg(horizontal.y(), 0, 'g', 14);
+    qDebug()<<QString("horizontal x: %1 y: %2").arg(horizontal->x(), 0, 'g', 14).arg(horizontal->y(), 0, 'g', 14);
 
     QPointF temp;
     temp.setX(horizontal->x() - origin->x());
@@ -35,19 +35,30 @@ MyCoordinate::~MyCoordinate()
 
 void MyCoordinate::paintGrid(const QList<EsriRuntimeQt::Point*>& pointList)
 {
+    qDebug()<<"paintGrid"<<pointList.size();
     QList<QPointF*> pointFList;
     foreach(EsriRuntimeQt::Point* point, pointList)
     {
-        pointFList.append(&point->toQPointF());
+        qDebug()<<"point x"<< point->x() << " y " << point->y();
+        QPointF* pointF = new QPointF(point->toQPointF());
+        pointFList.append(pointF);
     }
 
     QList<QPointF*> returnPointList = mapPointsToMyCoordinate(pointFList);
 
     QLineF yAxisLine = getYAxisLineFromList(this->yAxisList);
     QLineF xAxisLine = getXAxisLineFromList(this->xAxisList);
+//    qDebug()<<"yAxisLine 1"<< yAxisLine.x1() << yAxisLine.y1();
+//    qDebug()<<" 2"<< yAxisLine.x2() << yAxisLine.y2();
+//    qDebug()<<" xAxixLine 1"<< xAxisLine.x1() << xAxisLine.y1();
+//    qDebug()<<"xAxisLine 2"<< xAxisLine.x2() << xAxisLine.y2();
     QList<QLineF*> lineList = pointListToLines(returnPointList);
+//    qDebug()<<" lineList size"<<lineList.size();
     paintLines(lineList, yAxisLine, xAxisLine);
 
+    qDeleteAll(pointFList);
+    qDeleteAll(returnPointList);
+    qDeleteAll(lineList);
 }
 
 QList<QPointF*>  MyCoordinate::mapPointsToMyCoordinate(const QList<QPointF*>& pointList)
@@ -57,13 +68,14 @@ QList<QPointF*>  MyCoordinate::mapPointsToMyCoordinate(const QList<QPointF*>& po
     {
         QPointF* temp = mapPointToMyCoordinate(point);
         returnPointList.append(temp);
-//        qDebug()<<"Mycoordinate point x:"<<temp.x()<<" y: "<<temp.y();
+        qDebug()<<"Mycoordinate point x:"<<temp->x()<<" y: "<<temp->y();
     }
     return returnPointList;
 }
 
 QPointF* MyCoordinate::mapPointToMyCoordinate( QPointF* point)
 {
+    qDebug()<<" map point to my Coordinate" << point->x()<< point->y();
     QPointF* returnPoint = new QPointF();
     QPointF temp;
     temp.setX(point->x() - origin->x());
@@ -133,6 +145,7 @@ void MyCoordinate::paintLines(const QList<QLineF*>& lineList, const QLineF& yAxi
         yPointList.append(ylist);
         QList<QPointF*> xlist = getXPointListFromLine(line, yAxisLine, xAxisLine);
         xPointList.append(xlist);
+
     }
     QList<QLineF*> tempList;
     qDebug()<<"yPointList size"<<yPointList.size();
@@ -209,6 +222,15 @@ void MyCoordinate::paintLines(const QList<QLineF*>& lineList, const QLineF& yAxi
 //    emit paintPathList(drawCornerList);
 
     //    return returnPointList;
+    qDebug()<<" qdelete all start";
+    qDeleteAll(yPointList);
+    qDeleteAll(xPointList);
+    qDeleteAll(tempList);
+    qDeleteAll(drawLineList);
+    qDeleteAll(pathList);
+    qDeleteAll(pathLineList);
+//    qDeleteAll(cornerList);
+    qDeleteAll(drawPathList);
 }
 
 QList<QPointF*> MyCoordinate::getYPointListFromLine( QLineF *line, const QLineF& yAxisLine, const QLineF& xAxisLine)
@@ -228,8 +250,8 @@ QList<QPointF*> MyCoordinate::getYPointListFromLine( QLineF *line, const QLineF&
             y = - i * gridWidth;
         QLineF tempLine = xAxisLine;
         tempLine.translate(0, y);
-        qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
-        qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
+//        qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
+//        qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
         QPointF *intersectPoint = new QPointF();
         QLineF::IntersectType intersectType =  line->intersect(tempLine, intersectPoint);
         if (intersectType == QLineF::BoundedIntersection)
@@ -257,8 +279,8 @@ QList<QPointF*> MyCoordinate::getXPointListFromLine(QLineF *line, const QLineF& 
             double x = -i * gridWidth;
             QLineF tempLine = yAxisLine;
             tempLine.translate(x, 0);
-            qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
-            qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
+//            qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
+//            qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
             QPointF *intersectPoint = new QPointF();
             QLineF::IntersectType intersectType =  line->intersect(tempLine, intersectPoint);
             if (intersectType == QLineF::BoundedIntersection)
@@ -274,8 +296,8 @@ QList<QPointF*> MyCoordinate::getXPointListFromLine(QLineF *line, const QLineF& 
         double x = i * gridWidth;
         QLineF tempLine = yAxisLine;
         tempLine.translate(x, 0);
-        qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
-        qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
+//        qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
+//        qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
         QPointF *intersectPoint = new QPointF();
         QLineF::IntersectType intersectType =  line->intersect(tempLine, intersectPoint);
         if (intersectType == QLineF::BoundedIntersection)
@@ -384,8 +406,8 @@ QList<QPointF*> MyCoordinate::getPathListFromLine(QLineF *line, const QLineF& yA
             y = - (i - 0.5) * gridWidth;
         QLineF tempLine = xAxisLine;
         tempLine.translate(0, y);
-        qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
-        qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
+//        qDebug()<<"tempLine"<<tempLine.x1()<<tempLine.y1();
+//        qDebug()<<" p2"<<tempLine.x2() << tempLine.y2();
         QPointF *intersectPoint = new QPointF();
         QLineF::IntersectType intersectType =  line->intersect(tempLine, intersectPoint);
         if (intersectType == QLineF::BoundedIntersection)

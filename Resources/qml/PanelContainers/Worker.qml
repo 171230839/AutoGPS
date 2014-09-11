@@ -3,6 +3,7 @@ import "../Panels/Worker"
 import "../Controls"
 
 
+
 Item{
      signal createProjectClicked()
     signal saveProjectClicked()
@@ -14,6 +15,7 @@ Item{
     property Stack stack
     id: worker
     panel: workerPanel
+
     objectName: "worker"
 
     WorkerPanel
@@ -22,6 +24,7 @@ Item{
         stack: worker.stack
          anchors.fill: parent
         geometryPanel: geometryPanel
+        recordPanel: record.panel
         Component.onCompleted:
         {
             createProjectClicked.connect(worker.createProjectClicked)
@@ -41,6 +44,13 @@ Item{
              toPolygonClicked.connect(worker.toPolygonClicked)
             clearClicked.connect(worker.clearClicked)
          }
+    }
+
+    Record
+    {
+        id: record
+        stack: worker.stack
+        anchors.fill:  parent
     }
 
 //    PathsPanel

@@ -7,7 +7,7 @@ Panel
 
     property Panel configPanel
     property Panel workerPanel
-    property Panel recordPanel
+
 
     id: mainPanel
     title: qsTr("Main Menu")
@@ -15,8 +15,8 @@ Panel
     model:
         [
           ModelObject { text: qsTr("Start Work"); onNoArgModelSignal: stack.addPanel(workerPanel);},
-        ModelObject { text: qsTr("Config"); onNoArgModelSignal: stack.addPanel(configPanel); },
-        ModelObject { text: qsTr("Record"); onNoArgModelSignal: stack.addPanel(recordPanel);}
+        ModelObject { text: qsTr("Config"); onNoArgModelSignal: stack.addPanel(configPanel); }
+//        ModelObject { text: qsTr("Record"); onNoArgModelSignal: stack.addPanel(recordPanel);}
     ]
 
     PushButton

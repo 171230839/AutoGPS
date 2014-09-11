@@ -51,6 +51,9 @@
 QT_BEGIN_NAMESPACE
 class QXmlStreamWriter;
 class QWidget;
+namespace EsriRuntimeQt{
+class Point;
+}
 QT_END_NAMESPACE
 
 namespace AutoGPSNAMESPACE{
@@ -91,7 +94,8 @@ signals:
     void headingChanged(QVariant);
     //    void stateChanged(QVariant);
     void avaliblePosition(double, double, double);
-    void paintGeometry(const QList<QPointF*> &);
+    void paintGeometry(const QList<QPointF*>&);
+    void paintProject(const QList<EsriRuntimeQt::Point*>&, QString);
 
 private:
     QString portName;
@@ -122,13 +126,17 @@ private:
     QString getCurrentDateString();
     QString getCurrentTimeString();
     QString getCurrentDateTimeString();
-    QXmlStreamReader reader;
-    QList<QPointF*> pointFList;
-    QStringList timeList;
+     QByteArray xmlByteArray;
+//    QXmlStreamReader reader;
+//    QList<QPointF*> pointFList;
+//    QStringList timeList;
     void parseXML(QXmlStreamReader&, QList<QPointF*> &, QStringList&);
     bool bXmlFileSelect;
     void readLog(QXmlStreamReader& reader, QList<QPointF*> &pointFList, QStringList& timeList);
-
+    void readAndPaintXmlFile(QString file, QString projectName);
+    void processGeometry();
+//    void parseGeometryXML(QXmlStreamReader &reader, QList<Point*>&pointList);
+     void copyXmlToProject(QString);
 public slots:
     void onReadyOpenSerialPort(QVariant);
     void onStartRecordClicked();
@@ -139,8 +147,9 @@ public slots:
     void onXmlStopAndSaveClicked();
     void onSelectXmlFileClicked();
     void onPlayInSimulatorClicked();
-    void onPaintGeometryClicked();
-
+//    void onPaintGeometryClicked();
+    void onSelectProjectClicked();
+    void onProcessProject(QString);
 };
 
 }

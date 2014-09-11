@@ -15,10 +15,11 @@
 
 
 
-const   double   PI   =   3.141592653589793;
-static const double  carWidth = 2.0;
+
 
 namespace AutoGPSNAMESPACE{
+const   double   PI   =   3.141592653589793;
+static const double  carWidth = 2.0;
 
 using namespace EsriRuntimeQt;
 
@@ -43,7 +44,9 @@ MapController::MapController(Map* inputMap,
     paintLayer(NULL),
     cropLandGraphicId(0),
     bSelectStartPoint(false),
-    startPoint(NULL)
+    startPoint(NULL),
+    bSelectProject(false),
+    projectLayer(NULL)
 {
 }
 
@@ -58,9 +61,7 @@ MapController::~MapController()
     }
 
     qDeleteAll(pointList);
-    pointList.clear();
     qDeleteAll(cropLandPointList);
-    cropLandPointList.clear();
     qDebug()<<"~MapController ok";
 }
 
@@ -69,12 +70,15 @@ void MapController::onMapReady()
     isMapReady = true;
     pointsLayer.reset(new EsriRuntimeQt::GraphicsLayer());
     map->addLayer(*pointsLayer);
+    projectLayer.reset(new GraphicsLayer());
+    map->addLayer(*projectLayer);
+
     map->grid().setType(GridType::Mgrs);
     map->grid().setVisible(false);
     qDebug()<<"minScale"<<map->minScale();
     qDebug()<<"maxScale"<<map->maxScale();
     qDebug()<<"scale"<<map->scale();
-    qDebug()<<"map referce"<<map->spatialReference().toJson();
+    qDebug()<<"map reference"<<map->spatialReference().toJson();
     map->setScale(6010.79);
 }
 
@@ -315,8 +319,7 @@ void MapController::handleToPolygonClicked()
         tmpList.append(temp);
         EsriRuntimeQt::Polygon polygon(tmpList);
         pointsLayer->addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor("Green"))));
-        temp.clear();
-        tmpList.clear();
+
     }
 }
 
@@ -333,6 +336,29 @@ void MapController::mousePress(QMouseEvent mouseEvent)
         Graphic mouseClickGraphic(*mapPoint, smsSymbol);
         graphicId = pointsLayer->addGraphic(mouseClickGraphic);
         return;
+    }
+    if (bSelectProject)
+    {
+        qDebug()<<"bselectProject";
+
+        QList<qint64> hitGraphicIDs = projectLayer->graphicIds(mousePoint.x(), mousePoint.y(), 3);
+        foreach(qint64 id, hitGraphicIDs)
+        {
+            Graphic graphic = projectLayer->graphic(id);
+            Geometry geometry = graphic.geometry();
+            if (Geometry::isMultipath(geometry.type()))
+            {
+//                projectLayer->clearSelection();
+//                projectLayer->select(id);
+                QString projectName = projectMap.key(id);
+                qDebug()<<"projectName"<<projectName;
+                emit addCroplandPanel();
+                emit processProject(projectName);
+
+                bSelectProject = false;
+                return;
+            }
+        }
     }
     if (bSelectPoints)
     {
@@ -363,6 +389,7 @@ void MapController::mousePress(QMouseEvent mouseEvent)
                 paintLayer->clearSelection();
                 paintLayer->select(id);
                 startPoint.reset(new Point(geometry));
+                this->bSelectStartPoint = false;
                 return;
             }
         }
@@ -378,27 +405,6 @@ void MapController::onClearClicked()
     pointsLayer->removeAll();
     readyPointList = false;
 }
-
-//void MapController::preparePaths(const QList<Point> &pointList)
-//{
-//    qDebug()<<"preparePaths-size:"<<pointList.size();
-
-//    foreach (Point point , pointList)
-//    {
-//        Point temp = GeometryEngine::project(point, map->spatialReference(), WGS84);
-//        qDebug()<<QString("firstP x: %1 y: %2").arg(temp.x(), 0, 'g', 14).arg(temp.y(), 0, 'g', 14);
-//        wgsList.append(temp);
-//    }
-//    wgsList.append(wgsList.first());
-//    for (int i = 1; i < wgsList.size(); ++i)
-//    {
-//        GeodesicDistanceResult  distance = GeometryEngine::geodesicDistanceBetweenPoints(wgsList.at(i - 1), wgsList.at(i), WGS84);
-//        qDebug()<<"distance :"<<distance.distance() << "  angle:"<<distance.azimuthFrom1To2();
-//        distanceList.append(distance.distance());
-//        azimuthList.append(distance.azimuthFrom1To2());
-//    }
-//    wgsList.pop_back();
-//}
 
 
 void MapController::handleSelectPointsToggled(bool state)
@@ -436,8 +442,19 @@ void MapController::handleGetPathClicked()
         return;
     if (cropLandPointList.size() < 2)
         return;
+    int order = -1;
+//    foreach(Point*point, cropLandPointList)
+    for (int i = 0; i < cropLandPointList.size(); ++i)
+    {
+        Point start = * startPoint;
+        Point temp = *(cropLandPointList.at(i));
+        if ((start.x() == temp.x())&&(start.y() == temp.y()))
+        {
+            order = i;
+        }
+    }
 
-    int order = cropLandPointList.indexOf(startPoint.data());
+//    int order = cropLandPointList.indexOf(startPoint.data());
     //    qDebug()<<"start Point x"<<startPoint.x()<<" Y:"<<startPoint.y();
     qDebug()<<"order"<<order;
 
@@ -446,9 +463,9 @@ void MapController::handleGetPathClicked()
 
         Point* x = getXAxisPoint(cropLandPointList, order);
         MyCoordinate coor(startPoint.data(), x, carWidth);
-        connect(&coor, SIGNAL(paintLineList(QList<Line>)), this, SLOT(onPaintLineList(QList<Line>)));
-        connect(&coor, SIGNAL(paintPathList(QList<Line>)), this, SLOT(onPaintPathList(QList<Line>)));
-        connect(&coor, SIGNAL(paintCornerList(QList<Line>)), this, SLOT(onPaintCornerList(QList<Line>)));
+        connect(&coor, SIGNAL(paintLineList(const QList<EsriRuntimeQt::Line*>&)), this, SLOT(onPaintLineList(const QList<EsriRuntimeQt::Line*>&)));
+        connect(&coor, SIGNAL(paintPathList(const QList<EsriRuntimeQt::Line*>&)), this, SLOT(onPaintPathList(const QList<EsriRuntimeQt::Line*>&)));
+//        connect(&coor, SIGNAL(paintCornerList(QList<EsriRuntimeQt::Line*>)), this, SLOT(onPaintCornerList(QList<EsriRuntimeQt::Line*>)));
         coor.paintGrid(cropLandPointList);
     }
 }
@@ -568,6 +585,7 @@ void MapController::onPaintGeometry(const QList<QPointF*> &pointFList)
     map->grid().setVisible(true);
     paintLayer.reset(new GraphicsLayer());
     map->addLayer(*paintLayer);
+
     qDebug()<<"addLayer";
     QList<Point> pointList;
     foreach(QPointF* pointF, pointFList)
@@ -604,7 +622,6 @@ void MapController::onPaintGeometry(const QList<QPointF*> &pointFList)
     {
         paintMgrsGrid(str);
     }
-
 
 }
 
@@ -741,7 +758,7 @@ void MapController::handleSelectStartPointClicked()
     paintLayer->clearSelection();
 }
 
-void MapController::onPaintLineList(QList<Line*> lineList)
+void MapController::onPaintLineList(const QList<Line*> &lineList)
 {
     qDebug()<<"onPaintLineList"<<lineList.size();
     QList<QList<Point> > tmpList;
@@ -756,9 +773,11 @@ void MapController::onPaintLineList(QList<Line*> lineList)
     EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(255,0,0, 140), 1, SimpleLineSymbolStyle::Dot);
     EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
     paintLayer->addGraphic(graphic1);
+//    qDeleteAll(lineList);
+    qDebug()<<"qDelete all ";
 }
 
-void MapController::onPaintPathList(QList<Line*> lineList)
+void MapController::onPaintPathList(const QList<Line*> &lineList)
 {
     qDebug()<<"onPaintPathList"<<lineList.size();
     QList<QList<Point> > tmpList;
@@ -774,48 +793,27 @@ void MapController::onPaintPathList(QList<Line*> lineList)
     EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(255,0,255, 200), 1);
     EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
     paintLayer->addGraphic(graphic1);
+//    qDeleteAll(lineList);
+    qDebug()<<"onPaintPathList over ";
 }
 
-void MapController::onPaintCornerList(QList<Line*> lineList)
-{
-    QList<QList<Point> > tmpList;
-    foreach (Line* line, lineList)
-    {
-        QList<Point> pointList;
-        pointList.append(line->startXY());
-        pointList.append(line->endXY());
-        tmpList.append(pointList);
-        //        QList<Point> arrow =
-    }
-    EsriRuntimeQt::Polyline line1(tmpList);
-    EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(255,0,255, 200), 1);
-    EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
-    paintLayer->addGraphic(graphic1);
-}
+//void MapController::onPaintCornerList(QList<Line*> lineList)
+//{
+//    QList<QList<Point> > tmpList;
+//    foreach (Line* line, lineList)
+//    {
+//        QList<Point> pointList;
+//        pointList.append(line->startXY());
+//        pointList.append(line->endXY());
+//        tmpList.append(pointList);
+//    }
+//    EsriRuntimeQt::Polyline line1(tmpList);
+//    EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(255,0,255, 200), 1);
+//    EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
+//    paintLayer->addGraphic(graphic1);
+//}
 
-void MapController::onToCroplandClicked()
-{
-    qDebug()<<"onTOcropLandClicked()";
-    QString dirPath = QCoreApplication::applicationDirPath();
-    QDir dir(dirPath);
-    if (!dir.exists("Projects"))
-    {
-        dir.mkdir("Projects");
-    }
-    qDebug()<<"dirPath"<<dirPath;
-    projectName = QFileDialog::getExistingDirectory(widget, tr("Open Directory"),
-                                                    dirPath + "/Projects",
-                                                    QFileDialog::ShowDirsOnly
-                                                    | QFileDialog::DontResolveSymlinks);
-    qDebug()<<"projectName"<<projectName;
-    if ((projectName == dirPath) || (!projectName.contains(dirPath)))
-    {
-        emit error(QVariant::fromValue(tr("Warning unable to select project with path %1")
-                                       .arg(projectName)));
-        projectName = "";
-        return;
-    }
-}
+
 
 
 void MapController::setSimpleVisible(bool state)
@@ -837,7 +835,7 @@ void MapController::handleCreateProjectClicked()
     }
     projectPath = QFileDialog::getSaveFileName(widget, tr("Create Project"),
                                                dirPath + "/Projects");
-    qDebug()<<"project";
+    qDebug()<<"project"<<projectPath;
     if ((projectPath == dirPath) || (!projectPath.contains(dirPath)))
     {
         emit error(QVariant::fromValue(tr("Warning unable to create project with path %1")
@@ -883,6 +881,27 @@ void MapController::handleSaveProjectClicked()
     file.close();
 
 }
+
+void MapController::onPaintProject(const QList<Point*> &pointList, QString projectName)
+{
+    qDebug()<<"onPaintProject"<<pointList.size();
+    this->bSelectProject = true;
+
+    QList<Point> tempList;
+    foreach(Point * point, pointList)
+    {
+        tempList.append(Point(point->x(), point->y()));
+    }
+
+    QList<QList<EsriRuntimeQt::Point> > tmpList;
+    tmpList.append(tempList);
+    EsriRuntimeQt::Polygon polygon(tmpList);
+    qint64 id = projectLayer->addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor("Green"))));
+    projectMap.insert(projectName, id);
+
+//    qDeleteAll(pointList);
+}
+
 
 }
 

@@ -48,9 +48,9 @@ private:
 
 
 signals:
-    void paintLineList(QList<EsriRuntimeQt::Line*>);
-    void paintPathList(QList<EsriRuntimeQt::Line*>);
-    void paintCornerList(QList<EsriRuntimeQt::Line*>);
+    void paintLineList(const QList<EsriRuntimeQt::Line*>&);
+    void paintPathList(const QList<EsriRuntimeQt::Line*>&);
+//    void paintCornerList(QList<EsriRuntimeQt::Line*>);
 };
 
 }

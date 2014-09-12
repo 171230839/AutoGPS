@@ -115,7 +115,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(overlayUI.data(), SIGNAL(captureStart(bool)), camera.data(), SLOT(handleCaptureStart(bool)));
     connect(thread.data(), SIGNAL(error(QVariant)), overlayUI.data(), SLOT(error(QVariant)));
     connect(thread.data(), SIGNAL(paintGeometry(const QList<QPointF*>&)), mapController.data(), SLOT(onPaintGeometry(const QList<QPointF*>&)));
-    connect(thread.data(), SIGNAL(paintProject(const QList<EsriRuntimeQt::Point*>&, QString)), mapController.data(), SLOT(onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString)));
+    connect(thread.data(), SIGNAL(paintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString)), mapController.data(), SLOT(onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString)));
     connect(mapController.data(), SIGNAL(processProject(QString)), thread.data(), SLOT(onProcessProject(QString)));
 
 
@@ -123,6 +123,8 @@ AutoGPS::AutoGPS (QWidget *parent):
     if (mainMenuUI)
     {
         connect(mainMenuUI, SIGNAL(exitClicked()), this, SLOT(close()));
+        connect(mainMenuUI, SIGNAL(userSelectProjectClicked(QString )), thread.data(), SLOT(onSelectProjectClicked(QString)));
+        connect(mapController.data(), SIGNAL(gotoPlayerPanel()), mainMenuUI, SLOT(onGotoPlayerPanel()));
     }
 
     QObject * serialConfig = overlayUI->findChild<QObject*>("serialConfig");
@@ -162,7 +164,7 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(record, SIGNAL(selectXmlFileClicked()), thread.data(), SLOT(onSelectXmlFileClicked()));
 //        connect(record, SIGNAL(playInSimulatorClicked()), thread.data(), SLOT(onPlayInSimulatorClicked()));
 //        connect(record, SIGNAL(paintGeometryClicked()), thread.data(), SLOT(onPaintGeometryClicked()));
-        connect(record, SIGNAL(selectProjectClicked()), thread.data(), SLOT(onSelectProjectClicked()));
+        connect(record, SIGNAL(selectProjectClicked(QString)), thread.data(), SLOT(onSelectProjectClicked(QString)));
         connect(mapController.data(), SIGNAL(addCroplandPanel()), record, SLOT(onAddCropLandPanel()));
 
 
@@ -171,6 +173,7 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(record, SIGNAL(unSelectClicked()), mapController.data(), SLOT(handleUnSelectClicked()));
         connect(record, SIGNAL(selectStartPointClicked()), mapController.data(), SLOT(handleSelectStartPointClicked()));
         connect(record, SIGNAL(getPathClicked()), mapController.data(), SLOT(handleGetPathClicked()));
+        connect(record, SIGNAL(pathSaveProjectClicked()), mapController.data(), SLOT(handlePathSaveProjectClicked()));
     }
 
     connect(map.data(), SIGNAL(mapReady()), mapController.data(), SLOT(onMapReady()));

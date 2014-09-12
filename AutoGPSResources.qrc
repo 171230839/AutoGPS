@@ -65,5 +65,7 @@
         <file>Resources/qml/Panels/Record/XmlRecordPanel.qml</file>
         <file>Resources/qml/Panels/Record/CropLandPanel.qml</file>
         <file>Resources/qml/Panels/Record/RoutePanel.qml</file>
+        <file>Resources/qml/Panels/Player/PlayerPanel.qml</file>
+        <file>Resources/qml/PanelContainers/Player.qml</file>
     </qresource>
 </RCC>

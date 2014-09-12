@@ -20,7 +20,7 @@ class MyCoordinate : public QObject
 {
     Q_OBJECT
 public:
-    MyCoordinate(const EsriRuntimeQt::Point* origin, const EsriRuntimeQt::Point* horizontal, double gridWidth);
+    MyCoordinate(const EsriRuntimeQt::Point* origin, const EsriRuntimeQt::Point* horizontal, double gridWidth, QString orientation);
     ~MyCoordinate();
     void paintGrid(const QList<EsriRuntimeQt::Point*>& pointList);
 private:
@@ -36,6 +36,8 @@ private:
     EsriRuntimeQt::Point myPointToMapPoint(const QPointF & point);
     QList<QPointF*> getPathListFromLine(QLineF*, const QLineF& yAxisLine, const QLineF& xAxisLine);
     QList<QLineF*> getCornerListFromPathLineList(const QList<QLineF*>&, const QLineF&, const QLineF&);
+//    QList<QLineF*> getCircleListFromPathLineList(const QList<QLineF*>&, const QLineF&, const QLineF&);
+
 private:
     QScopedPointer<QPointF> origin;
     QScopedPointer<QPointF> horizontal;
@@ -45,7 +47,7 @@ private:
     double yAxisMax;
    QVector<double> yAxisList;
    QVector<double> xAxisList;
-
+   QString orientation;
 
 signals:
     void paintLineList(const QList<EsriRuntimeQt::Line*>&);

@@ -42,11 +42,11 @@ MapController::MapController(Map* inputMap,
     bSelectPoints(false),
     bTiledLayerVisible(true),
     paintLayer(NULL),
-    cropLandGraphicId(0),
     bSelectStartPoint(false),
     startPoint(NULL),
     bSelectProject(false),
-    projectLayer(NULL)
+    projectLayer(NULL),
+    pathLayer(NULL)
 {
 }
 
@@ -59,9 +59,18 @@ MapController::~MapController()
             pointList.pop_front();
         }
     }
-
     qDeleteAll(pointList);
-    qDeleteAll(cropLandPointList);
+    if (paintLineList.size() > 0)
+    {
+        qDeleteAll(paintLineList);
+        paintLineList.clear();
+    }
+    if (paintPathList.size() > 0)
+    {
+        qDeleteAll(paintPathList);
+        paintPathList.clear();
+    }
+    qDeleteAll(croplandPointList);
     qDebug()<<"~MapController ok";
 }
 
@@ -72,6 +81,8 @@ void MapController::onMapReady()
     map->addLayer(*pointsLayer);
     projectLayer.reset(new GraphicsLayer());
     map->addLayer(*projectLayer);
+    pathLayer.reset(new GraphicsLayer());
+    map->addLayer(*pathLayer);
 
     map->grid().setType(GridType::Mgrs);
     map->grid().setVisible(false);
@@ -348,13 +359,24 @@ void MapController::mousePress(QMouseEvent mouseEvent)
             Geometry geometry = graphic.geometry();
             if (Geometry::isMultipath(geometry.type()))
             {
-//                projectLayer->clearSelection();
-//                projectLayer->select(id);
-                QString projectName = projectMap.key(id);
-                qDebug()<<"projectName"<<projectName;
-                emit addCroplandPanel();
-                emit processProject(projectName);
+                //                projectLayer->clearSelection();
+                //                projectLayer->select(id);
 
+                this->projectName = projectMap.key(id);
+                qDebug()<<"projectName"<<projectName;
+                if (this->projectUser.isEmpty())
+                    return;
+
+                if (this->projectUser == "worker")
+                {
+                    emit addCroplandPanel();
+                    emit processProject(projectName);
+                }
+                else if (this->projectUser == "player")
+                {
+                    emit gotoPlayerPanel();
+                    readAndPaintPathXMLFile(projectName);
+                }
                 bSelectProject = false;
                 return;
             }
@@ -371,7 +393,7 @@ void MapController::mousePress(QMouseEvent mouseEvent)
             if (Geometry::isPoint(geometry.type()))
             {
                 paintLayer->select(id);
-                cropLandPointList.append(new Point(geometry));
+                croplandPointList.append(new Point(geometry));
                 return;
             }
         }
@@ -412,61 +434,67 @@ void MapController::handleSelectPointsToggled(bool state)
     bSelectPoints = state;
     if (state)
     {
-        qDeleteAll(cropLandPointList);
-        cropLandPointList.clear();
+        qDeleteAll(croplandPointList);
+        croplandPointList.clear();
     }
 }
 
 void MapController::handlePaintCropLandClicked()
 {
-    if (cropLandPointList.isEmpty())
+    if (croplandPointList.isEmpty())
         return;
     //    pointList.append(pointList.first());
+    qDebug()<<"handlePaintCroplandclicked"<<croplandPointList.size();
+    paintCropland(this->croplandPointList);
+}
+
+void MapController::paintCropland(const QList<EsriRuntimeQt::Point*>& croplandPointList)
+{
     QList<Point> temp;
-    foreach(Point* point, cropLandPointList)
+    foreach(Point* point, croplandPointList)
     {
         temp.append(*point);
     }
     QList<QList<EsriRuntimeQt::Point> > tmpList;
     tmpList.append(temp);
     EsriRuntimeQt::Polygon polygon(tmpList);
-    cropLandGraphicId = paintLayer->addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor(0, 180, 0, 200))));
+    pathLayer->addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor(0, 180, 0, 200))));
 
 }
 
 void MapController::handleGetPathClicked()
 {
-    qDebug()<<"handleGetPathClicked()"<<cropLandPointList.size();
+    qDebug()<<"handleGetPathClicked()"<<croplandPointList.size();
 
     if (startPoint->isEmpty())
         return;
-    if (cropLandPointList.size() < 2)
+    if (croplandPointList.size() < 2)
         return;
     int order = -1;
-//    foreach(Point*point, cropLandPointList)
-    for (int i = 0; i < cropLandPointList.size(); ++i)
+    //    foreach(Point*point, croplandPointList)
+    for (int i = 0; i < croplandPointList.size(); ++i)
     {
         Point start = * startPoint;
-        Point temp = *(cropLandPointList.at(i));
+        Point temp = *(croplandPointList.at(i));
         if ((start.x() == temp.x())&&(start.y() == temp.y()))
         {
             order = i;
         }
     }
 
-//    int order = cropLandPointList.indexOf(startPoint.data());
+    //    int order = croplandPointList.indexOf(startPoint.data());
     //    qDebug()<<"start Point x"<<startPoint.x()<<" Y:"<<startPoint.y();
     qDebug()<<"order"<<order;
 
     if (order != -1)
     {
 
-        Point* x = getXAxisPoint(cropLandPointList, order);
-        MyCoordinate coor(startPoint.data(), x, carWidth);
+        Point* x = getXAxisPoint(croplandPointList, order);
+        MyCoordinate coor(startPoint.data(), x, carWidth, this->orientation);
         connect(&coor, SIGNAL(paintLineList(const QList<EsriRuntimeQt::Line*>&)), this, SLOT(onPaintLineList(const QList<EsriRuntimeQt::Line*>&)));
         connect(&coor, SIGNAL(paintPathList(const QList<EsriRuntimeQt::Line*>&)), this, SLOT(onPaintPathList(const QList<EsriRuntimeQt::Line*>&)));
-//        connect(&coor, SIGNAL(paintCornerList(QList<EsriRuntimeQt::Line*>)), this, SLOT(onPaintCornerList(QList<EsriRuntimeQt::Line*>)));
-        coor.paintGrid(cropLandPointList);
+        //        connect(&coor, SIGNAL(paintCornerList(QList<EsriRuntimeQt::Line*>)), this, SLOT(onPaintCornerList(QList<EsriRuntimeQt::Line*>)));
+        coor.paintGrid(croplandPointList);
     }
 }
 
@@ -502,24 +530,26 @@ Point * MapController::getXAxisPoint(const QList<Point*>& list, int order)
     }
     if (behindDistance <= frontDistance)
     {
+        this->orientation = "front";
         if (order == 0)
         {
-            returnPoint = cropLandPointList.back();
+            returnPoint = croplandPointList.back();
         }
         else
         {
-            returnPoint = cropLandPointList.at(order - 1);
+            returnPoint = croplandPointList.at(order - 1);
         }
     }
     else
     {
+        this->orientation = "behind";
         if (order == (list.size() - 1))
         {
-            returnPoint = cropLandPointList.first();
+            returnPoint = croplandPointList.first();
         }
         else
         {
-            returnPoint = cropLandPointList.at(order + 1);
+            returnPoint = croplandPointList.at(order + 1);
         }
     }
     distanceList.clear();
@@ -529,13 +559,15 @@ Point * MapController::getXAxisPoint(const QList<Point*>& list, int order)
 void MapController::handleUnSelectClicked()
 {
     paintLayer->clearSelection();
-    if (cropLandGraphicId)
-    {
-        paintLayer->removeGraphic(cropLandGraphicId);
-    }
+    //    if (cropLandGraphicId)
+    //    {
+    //        paintLayer->removeGraphic(cropLandGraphicId);
+    //    }
+    pathLayer->removeAll();
+
     bSelectStartPoint = false;
-    qDeleteAll(cropLandPointList);
-    cropLandPointList.clear();
+    qDeleteAll(croplandPointList);
+    croplandPointList.clear();
     startPoint->clear();
 }
 
@@ -580,12 +612,12 @@ void MapController::onPaintGeometry(const QList<QPointF*> &pointFList)
     qDebug()<<"onPaintGeometry"<<pointFList.size();
     if (pointFList.size() == 0)
         return;
-
     map->removeAll();
     map->grid().setVisible(true);
     paintLayer.reset(new GraphicsLayer());
     map->addLayer(*paintLayer);
-
+    pathLayer.reset(new GraphicsLayer());
+    map->addLayer(*pathLayer);
     qDebug()<<"addLayer";
     QList<Point> pointList;
     foreach(QPointF* pointF, pointFList)
@@ -761,6 +793,12 @@ void MapController::handleSelectStartPointClicked()
 void MapController::onPaintLineList(const QList<Line*> &lineList)
 {
     qDebug()<<"onPaintLineList"<<lineList.size();
+    if (paintLineList.size() > 0)
+    {
+        qDeleteAll(paintLineList);
+        paintLineList.clear();
+    }
+    paintLineList.append(lineList);
     QList<QList<Point> > tmpList;
     foreach (Line* line, lineList)
     {
@@ -772,14 +810,20 @@ void MapController::onPaintLineList(const QList<Line*> &lineList)
     EsriRuntimeQt::Polyline line1(tmpList);
     EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(255,0,0, 140), 1, SimpleLineSymbolStyle::Dot);
     EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
-    paintLayer->addGraphic(graphic1);
-//    qDeleteAll(lineList);
+    pathLayer->addGraphic(graphic1);
+    //    qDeleteAll(lineList);
     qDebug()<<"qDelete all ";
 }
 
 void MapController::onPaintPathList(const QList<Line*> &lineList)
 {
     qDebug()<<"onPaintPathList"<<lineList.size();
+    if (paintPathList.size() > 0)
+    {
+        qDeleteAll(paintPathList);
+        paintPathList.clear();
+    }
+    paintPathList.append(lineList);
     QList<QList<Point> > tmpList;
     foreach (Line* line, lineList)
     {
@@ -792,8 +836,8 @@ void MapController::onPaintPathList(const QList<Line*> &lineList)
     EsriRuntimeQt::Polyline line1(tmpList);
     EsriRuntimeQt::SimpleLineSymbol lineSym1(QColor(255,0,255, 200), 1);
     EsriRuntimeQt::Graphic graphic1(line1, lineSym1);
-    paintLayer->addGraphic(graphic1);
-//    qDeleteAll(lineList);
+    pathLayer->addGraphic(graphic1);
+    //    qDeleteAll(lineList);
     qDebug()<<"onPaintPathList over ";
 }
 
@@ -882,11 +926,11 @@ void MapController::handleSaveProjectClicked()
 
 }
 
-void MapController::onPaintProject(const QList<Point*> &pointList, QString projectName)
+void MapController::onPaintProject(const QList<Point*> &pointList, QString projectName, QString user)
 {
     qDebug()<<"onPaintProject"<<pointList.size();
     this->bSelectProject = true;
-
+    this->projectUser = user;
     QList<Point> tempList;
     foreach(Point * point, pointList)
     {
@@ -899,8 +943,209 @@ void MapController::onPaintProject(const QList<Point*> &pointList, QString proje
     qint64 id = projectLayer->addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor("Green"))));
     projectMap.insert(projectName, id);
 
-//    qDeleteAll(pointList);
+    //    qDeleteAll(pointList);
 }
+
+void MapController::handlePathSaveProjectClicked()
+{
+    qDebug()<<"handlePathSaveProjectClicked())";
+    QString dirPath = QCoreApplication::applicationDirPath();
+    QString str = dirPath  + "/Projects/" + projectName;
+    qDebug()<<"str "<<str;
+    QDir dir(str);
+    if (!dir.exists())
+    {
+        return;
+    }
+    QString fileName = dir.absoluteFilePath("path.xml");
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        emit error(QVariant::fromValue(tr("Can't open xml file %1")
+                                       .arg(fileName)));
+        return;
+    }
+    QByteArray array;
+    QXmlStreamWriter writer(&array);
+    writer.setAutoFormatting(true);
+    writer.writeStartDocument();
+    writer.writeStartElement("Start");
+    writer.writeStartElement("CroplandPoints");
+    foreach(Point* point, croplandPointList)
+    {
+        writer.writeStartElement("Point");
+        writer.writeAttribute("x", QString("%1").arg(point->x(), 0, 'g', 11));
+        writer.writeAttribute("y", QString("%1").arg(point->y(), 0, 'g', 11));
+        writer.writeEndElement();
+    }
+    writer.writeEndElement();
+    writer.writeStartElement("PaintLines");
+    foreach(Line* line, paintLineList)
+    {
+        writer.writeStartElement("Line");
+        Point start = line->startXY();
+        Point end = line->endXY();
+        writer.writeStartElement("StartPoint");
+        writer.writeAttribute("x", QString("%1").arg(start.x(), 0, 'g', 11));
+        writer.writeAttribute("y", QString("%1").arg(start.y(), 0, 'g', 11));
+        writer.writeEndElement();
+        writer.writeStartElement("EndPoint");
+        writer.writeAttribute("x", QString("%1").arg(end.x(), 0, 'g', 11));
+        writer.writeAttribute("y", QString("%1").arg(end.y(), 0, 'g', 11));
+        writer.writeEndElement();
+        writer.writeEndElement();
+    }
+    writer.writeEndElement();
+    writer.writeStartElement("PaintPaths");
+    foreach(Line* line, paintPathList)
+    {
+        writer.writeStartElement("Path");
+        Point start = line->startXY();
+        Point end = line->endXY();
+        writer.writeStartElement("StartPoint");
+        writer.writeAttribute("x", QString("%1").arg(start.x(), 0, 'g', 11));
+        writer.writeAttribute("y", QString("%1").arg(start.y(), 0, 'g', 11));
+        writer.writeEndElement();
+        writer.writeStartElement("EndPoint");
+        writer.writeAttribute("x", QString("%1").arg(end.x(), 0, 'g', 11));
+        writer.writeAttribute("y", QString("%1").arg(end.y(), 0, 'g', 11));
+        writer.writeEndElement();
+        writer.writeEndElement();
+    }
+    writer.writeEndElement();
+    writer.writeEndElement();
+    writer.writeEndDocument();
+
+    qDeleteAll(paintLineList);
+    paintLineList.clear();
+    qDeleteAll(paintPathList);
+    paintPathList.clear();
+    file.write(array);
+    file.close();
+
+}
+
+
+void MapController::readAndPaintPathXMLFile(QString projectName)
+{
+    qDebug()<<"readAndPaintPathXmlfile"<<projectName;
+    map->removeAll();
+    map->grid().setVisible(true);
+    pathLayer.reset(new GraphicsLayer());
+    map->addLayer(*pathLayer);
+
+    QString dirPath = QCoreApplication::applicationDirPath();
+    QString str = dirPath + "/Projects/" + projectName;
+    qDebug()<<"str "<<str;
+    QDir dir(str);
+    if (!dir.exists())
+    {
+        return;
+    }
+    QString fileName = dir.absoluteFilePath("path.xml");
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        emit error(QVariant::fromValue(tr("Can't open xml file %1")
+                                       .arg(fileName)));
+        return;
+    }
+    QByteArray array = file.readAll();
+    QXmlStreamReader reader(array);
+    QList<Point*> croplandPointList;
+    QList<EsriRuntimeQt::Line*> paintLineList;
+    QList<EsriRuntimeQt::Line*> paintPathList;
+    qDebug()<<"start read";
+    while (!reader.atEnd() && !reader.hasError())
+    {
+        reader.readNext();
+        if (reader.isStartElement())
+        {
+            if (reader.name().compare("Point") == 0)
+            {
+                QXmlStreamAttributes attrs = reader.attributes();
+                double x = attrs.value("x").toString().toDouble();
+                double y = attrs.value("y").toString().toDouble();
+                Point *point = new Point(x, y);
+                croplandPointList.append(point);
+            }
+            else if (reader.name().compare("Line") == 0)
+            {
+                Line *line = new Line();
+                while (!(reader.isEndElement() && (reader.name().compare("Line") == 0)))
+                {
+                    reader.readNext();
+                    if (reader.isStartElement())
+                    {
+                        if (reader.name().compare("StartPoint"))
+                        {
+                            QXmlStreamAttributes attrs = reader.attributes();
+                            double x = attrs.value("x").toString().toDouble();
+                            double y = attrs.value("y").toString().toDouble();
+                            line->setStartXY(x , y);
+                        }
+                        else if (reader.name().compare("EndPoint"))
+                        {
+                            QXmlStreamAttributes attrs = reader.attributes();
+                            double x = attrs.value("x").toString().toDouble();
+                            double y = attrs.value("y").toString().toDouble();
+                            line->setEnd(Point(x, y));
+                        }
+                    }
+
+                }
+                paintLineList.append(line);
+            }
+            else if (reader.name().compare("Path") == 0)
+            {
+                Line *line = new Line();
+                while (!(reader.isEndElement() && (reader.name().compare("Path") == 0)))
+                {
+                    reader.readNext();
+                    if (reader.isStartElement())
+                    {
+                        if (reader.name().compare("StartPoint"))
+                        {
+                            QXmlStreamAttributes attrs = reader.attributes();
+                            double x = attrs.value("x").toString().toDouble();
+                            double y = attrs.value("y").toString().toDouble();
+                            line->setStartXY(x , y);
+                        }
+                        else if (reader.name().compare("EndPoint"))
+                        {
+                            QXmlStreamAttributes attrs = reader.attributes();
+                            double x = attrs.value("x").toString().toDouble();
+                            double y = attrs.value("y").toString().toDouble();
+                            line->setEnd(Point(x, y));
+                        }
+                    }
+
+                }
+                paintPathList.append(line);
+            }
+        }
+    }
+    if (croplandPointList.size() == 0)
+        return;
+    qDebug()<<"croplandPointlIst size"<< croplandPointList.size();
+    qDebug()<<"paintLineList size"<<paintLineList.size();
+    qDebug()<<"paintPathList.szie"<<paintPathList.size();
+    map->panTo(*croplandPointList.first());
+    map->setScale(300);
+
+    this->paintCropland(croplandPointList);
+    this->onPaintLineList(paintLineList);
+    this->onPaintPathList(paintPathList);
+
+    qDeleteAll(croplandPointList);
+    croplandPointList.clear();
+//    qDeleteAll(paintPathList);
+//    paintPathList.clear();
+//    qDeleteAll(paintLineList);
+//    paintLineList.clear();
+    file.close();
+}
+
 
 
 }

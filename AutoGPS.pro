@@ -123,4 +123,6 @@ OTHER_FILES += \
     Resources/qml/Panels/Record/XmlRecordPanel.qml \
     Resources/qml/Panels/Record/CropLandPanel.qml \
     Resources/qml/Panels/Record/RoutePanel.qml \
-    myapp.ts
+    myapp.ts \
+    Resources/qml/PanelContainers/Player.qml\
+    Resources/qml/Panels/Player/PlayerPanel.qml

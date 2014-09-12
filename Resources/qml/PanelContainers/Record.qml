@@ -13,13 +13,14 @@ Item{
     signal selectXmlFileClicked()
 
 //    signal paintGeometryClicked()
-    signal selectProjectClicked()
+    signal selectProjectClicked(string user)
 
     signal selectPointsToggled(bool state)
     signal paintCropLandClicked()
     signal unSelectClicked()
     signal selectStartPointClicked()
     signal getPathClicked()
+     signal pathSaveProjectClicked()
     property Panel panel
     property Stack stack
 
@@ -84,7 +85,7 @@ Item{
             unSelectClicked.connect(record.unSelectClicked)
             selectStartPointClicked.connect(record.selectStartPointClicked)
             getPathClicked.connect(record.getPathClicked)
-
+            pathSaveProjectClicked.connect(record.pathSaveProjectClicked)
         }
     }
 //    RoutePanel

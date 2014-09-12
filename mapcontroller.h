@@ -59,9 +59,9 @@ private:
     void paintMgrsGrid(QString &);
      EsriRuntimeQt::Point MGRSToMapPoint(const QString&);
     void mgrsListToLines(const QStringList&, const QStringList&);
-    qint64 cropLandGraphicId;
+//    qint64 cropLandGraphicId;
     bool bSelectStartPoint;
-    QList<EsriRuntimeQt::Point*> cropLandPointList;
+    QList<EsriRuntimeQt::Point*> croplandPointList;
     QScopedPointer<EsriRuntimeQt::Point> startPoint;
     EsriRuntimeQt::Point* getXAxisPoint(const QList<EsriRuntimeQt::Point*>& list, int order);
     QString projectName;
@@ -69,6 +69,14 @@ private:
     bool bSelectProject;
     QScopedPointer<EsriRuntimeQt::GraphicsLayer> projectLayer;
     QMap<QString, qint64> projectMap;
+    void readAndPaintXmlFile(QString fileName, QString projectName);
+    QString projectUser;
+    QScopedPointer<EsriRuntimeQt::GraphicsLayer> pathLayer;
+    QList<EsriRuntimeQt::Line*> paintLineList;
+    QList<EsriRuntimeQt::Line*> paintPathList;
+    void readAndPaintPathXMLFile(QString);
+    void paintCropland(const QList<EsriRuntimeQt::Point*>&);
+    QString orientation;
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);
@@ -76,6 +84,7 @@ signals:
     void error( QVariant );
     void processProject(QString);
     void addCroplandPanel();
+    void gotoPlayerPanel();
 public slots:
     void onMapReady();
 
@@ -109,7 +118,8 @@ public slots:
 //    void onPaintCornerList(QList<EsriRuntimeQt::Line*>);
 
     void handleSaveProjectClicked();
-    void onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString);
+    void onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString);
+    void handlePathSaveProjectClicked();
 };
 
 }

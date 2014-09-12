@@ -4,7 +4,7 @@ import "../../Controls"
 Panel
 {
     signal exitClicked()
-
+    signal userSelectProjectClicked(string user)
     property Panel configPanel
     property Panel workerPanel
 
@@ -15,7 +15,8 @@ Panel
     model:
         [
           ModelObject { text: qsTr("Start Work"); onNoArgModelSignal: stack.addPanel(workerPanel);},
-        ModelObject { text: qsTr("Config"); onNoArgModelSignal: stack.addPanel(configPanel); }
+        ModelObject { text: qsTr("Config"); onNoArgModelSignal: stack.addPanel(configPanel); },
+        ModelObject { text: qsTr("Play"); onNoArgModelSignal: mainPanel.userSelectProjectClicked("player");}
 //        ModelObject { text: qsTr("Record"); onNoArgModelSignal: stack.addPanel(recordPanel);}
     ]
 

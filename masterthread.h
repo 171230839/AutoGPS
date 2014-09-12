@@ -95,7 +95,7 @@ signals:
     //    void stateChanged(QVariant);
     void avaliblePosition(double, double, double);
     void paintGeometry(const QList<QPointF*>&);
-    void paintProject(const QList<EsriRuntimeQt::Point*>&, QString);
+    void paintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString );
 
 private:
     QString portName;
@@ -133,10 +133,11 @@ private:
     void parseXML(QXmlStreamReader&, QList<QPointF*> &, QStringList&);
     bool bXmlFileSelect;
     void readLog(QXmlStreamReader& reader, QList<QPointF*> &pointFList, QStringList& timeList);
-    void readAndPaintXmlFile(QString file, QString projectName);
+    void readAndPaintXmlFile(QString file, QString projectName, QString user);
     void processGeometry();
 //    void parseGeometryXML(QXmlStreamReader &reader, QList<Point*>&pointList);
      void copyXmlToProject(QString);
+
 public slots:
     void onReadyOpenSerialPort(QVariant);
     void onStartRecordClicked();
@@ -148,7 +149,7 @@ public slots:
     void onSelectXmlFileClicked();
     void onPlayInSimulatorClicked();
 //    void onPaintGeometryClicked();
-    void onSelectProjectClicked();
+    void onSelectProjectClicked(QString);
     void onProcessProject(QString);
 };
 

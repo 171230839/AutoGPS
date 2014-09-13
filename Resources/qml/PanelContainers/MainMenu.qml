@@ -6,7 +6,7 @@ Item
 {
     signal closeMenu()
     signal exitClicked()
-    signal userSelectProjectClicked(string user)
+
 
     property Stack stack
     property Panel panel
@@ -15,10 +15,10 @@ Item
     objectName: "mainMenu"
     panel: mainPanel
 
-    function onGotoPlayerPanel()
-    {
-            stack.addPanel(player.panel);
-    }
+//    function onGotoPlayerPanel()
+//    {
+//            stack.addPanel(player.panel);
+//    }
 
     MainPanel
     {
@@ -26,7 +26,7 @@ Item
         //    reportsPanel: reports.panel
         configPanel: config.panel
         workerPanel: worker.panel
-
+        playerPanel: player.panel
         anchors.fill: parent
         stack: mainMenu.stack;
         visible: false
@@ -40,7 +40,7 @@ Item
             // as a workaround (in Projects | Run | Debugger Settings)
             stack.addPanel(mainPanel);
             mainPanel.exitClicked.connect(mainMenu.exitClicked);
-            mainPanel.userSelectProjectClicked.connect(mainMenu.userSelectProjectClicked);
+
         }
     }
 

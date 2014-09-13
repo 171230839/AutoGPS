@@ -37,7 +37,8 @@ private:
     QList<QPointF*> getPathListFromLine(QLineF*, const QLineF& yAxisLine, const QLineF& xAxisLine);
     QList<QLineF*> getCornerListFromPathLineList(const QList<QLineF*>&, const QLineF&, const QLineF&);
 //    QList<QLineF*> getCircleListFromPathLineList(const QList<QLineF*>&, const QLineF&, const QLineF&);
-
+//  void pathLineBubbleSort(QList<QLineF*>);
+//    bool pathLineListSort(const QLineF*, const QLineF*);
 private:
     QScopedPointer<QPointF> origin;
     QScopedPointer<QPointF> horizontal;

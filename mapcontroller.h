@@ -72,11 +72,12 @@ private:
     void readAndPaintXmlFile(QString fileName, QString projectName);
     QString projectUser;
     QScopedPointer<EsriRuntimeQt::GraphicsLayer> pathLayer;
-    QList<EsriRuntimeQt::Line*> paintLineList;
-    QList<EsriRuntimeQt::Line*> paintPathList;
+//    QList<EsriRuntimeQt::Line*> paintLineList;
+//    QList<EsriRuntimeQt::Line*> paintPathList;
     void readAndPaintPathXMLFile(QString);
     void paintCropland(const QList<EsriRuntimeQt::Point*>&);
     QString orientation;
+    QStringList projectList;
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);
@@ -84,7 +85,7 @@ signals:
     void error( QVariant );
     void processProject(QString);
     void addCroplandPanel();
-    void gotoPlayerPanel();
+//    void gotoPlayerPanel();
 public slots:
     void onMapReady();
 
@@ -106,7 +107,7 @@ public slots:
     void handleToPolygonClicked();
     void onClearClicked();
     void mousePress(QMouseEvent);
-    void handleSelectPointsToggled(bool);
+    void handleSelectPointsClicked();
     void handleGetPathClicked();
     void handlePaintCropLandClicked();
     void handleUnSelectClicked();
@@ -120,6 +121,7 @@ public slots:
     void handleSaveProjectClicked();
     void onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString);
     void handlePathSaveProjectClicked();
+    void onGetCroplandsClicked();
 };
 
 }

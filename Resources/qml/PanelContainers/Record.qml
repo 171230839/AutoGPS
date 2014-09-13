@@ -15,7 +15,7 @@ Item{
 //    signal paintGeometryClicked()
     signal selectProjectClicked(string user)
 
-    signal selectPointsToggled(bool state)
+    signal selectPointsClicked()
     signal paintCropLandClicked()
     signal unSelectClicked()
     signal selectStartPointClicked()
@@ -80,7 +80,7 @@ Item{
         anchors.fill:  parent
         Component.onCompleted:
         {
-            selectPointsToggled.connect(record.selectPointsToggled)
+            selectPointsClicked.connect(record.selectPointsClicked)
             paintCropLandClicked.connect(record.paintCropLandClicked)
             unSelectClicked.connect(record.unSelectClicked)
             selectStartPointClicked.connect(record.selectStartPointClicked)

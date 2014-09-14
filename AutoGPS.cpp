@@ -99,7 +99,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(overlayUI.data(), SIGNAL(homeClicked()), mapController.data(), SLOT(handleHomeClicked()));
     connect(overlayUI.data(), SIGNAL(zoomInClicked()), mapController.data(), SLOT(handleZoomIn()));
     connect(overlayUI.data(), SIGNAL(zoomOutClicked()), mapController.data(), SLOT(handleZoomOut()));
-    connect(overlayUI.data(), SIGNAL(panClicked(QString)), mapController.data(), SLOT(handlePan(QString)));
+//    connect(overlayUI.data(), SIGNAL(panClicked(QString)), mapController.data(), SLOT(handlePan(QString)));
     connect(mapController.data(), SIGNAL(positionChanged(QVariant)), overlayUI.data(), SLOT(updateLocation(QVariant)));
     connect(mapController.data(), SIGNAL(speedChanged(QVariant)), overlayUI.data(), SLOT(updateSpeed(QVariant)));
     connect(mapController.data(), SIGNAL(headingChanged(QVariant)), overlayUI.data(), SLOT(updateHeading(QVariant)));
@@ -115,7 +115,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(overlayUI.data(), SIGNAL(captureStart(bool)), camera.data(), SLOT(handleCaptureStart(bool)));
     connect(thread.data(), SIGNAL(error(QVariant)), overlayUI.data(), SLOT(error(QVariant)));
     connect(thread.data(), SIGNAL(paintGeometry(const QList<QPointF*>&)), mapController.data(), SLOT(onPaintGeometry(const QList<QPointF*>&)));
-    connect(thread.data(), SIGNAL(paintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString)), mapController.data(), SLOT(onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString)));
+//    connect(thread.data(), SIGNAL(paintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString)), mapController.data(), SLOT(onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString)));
     connect(mapController.data(), SIGNAL(processProject(QString)), thread.data(), SLOT(onProcessProject(QString)));
 
 
@@ -149,6 +149,7 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(worker, SIGNAL(toPolygonClicked()), mapController.data(), SLOT(handleToPolygonClicked()));
         connect(worker, SIGNAL(clearClicked()), mapController.data(), SLOT(onClearClicked()));
         connect(worker, SIGNAL(saveProjectClicked()), mapController.data(), SLOT(handleSaveProjectClicked()));
+        connect(worker, SIGNAL(geometryGoBackClicked()), mapController.data(), SLOT(handleGeometryGoBackClicked()));
     }
 
 
@@ -164,7 +165,7 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(record, SIGNAL(selectXmlFileClicked()), thread.data(), SLOT(onSelectXmlFileClicked()));
 //        connect(record, SIGNAL(playInSimulatorClicked()), thread.data(), SLOT(onPlayInSimulatorClicked()));
 //        connect(record, SIGNAL(paintGeometryClicked()), thread.data(), SLOT(onPaintGeometryClicked()));
-        connect(record, SIGNAL(selectProjectClicked(QString)), thread.data(), SLOT(onSelectProjectClicked(QString)));
+        connect(record, SIGNAL(selectProjectClicked(QString)), mapController.data(), SLOT(handleSelectProjectClicked(QString)));
         connect(mapController.data(), SIGNAL(addCroplandPanel()), record, SLOT(onAddCropLandPanel()));
 
 
@@ -174,16 +175,17 @@ AutoGPS::AutoGPS (QWidget *parent):
         connect(record, SIGNAL(selectStartPointClicked()), mapController.data(), SLOT(handleSelectStartPointClicked()));
         connect(record, SIGNAL(getPathClicked()), mapController.data(), SLOT(handleGetPathClicked()));
         connect(record, SIGNAL(pathSaveProjectClicked()), mapController.data(), SLOT(handlePathSaveProjectClicked()));
+        connect(record, SIGNAL(croplandGoBackClicked()), mapController.data(), SLOT(handleCroplandGoBackClicked()));
     }
     QObject* player = overlayUI->findChild<QObject*>("player");
     if (player)
     {
-        connect(player, SIGNAL(userSelectProjectClicked(QString )), thread.data(), SLOT(onSelectProjectClicked(QString)));
+        connect(player, SIGNAL(userSelectProjectClicked(QString )), mapController.data(), SLOT(handleSelectProjectClicked(QString)));
         connect(player, SIGNAL(getCroplandsClicked()), mapController.data(), SLOT(onGetCroplandsClicked()));
     }
 
     connect(map.data(), SIGNAL(mapReady()), mapController.data(), SLOT(onMapReady()));
-    connect(map.data(), SIGNAL(mouseWheel(QWheelEvent)), mapController.data(), SLOT(onMouseWheel(QWheelEvent)));
+//    connect(map.data(), SIGNAL(mouseWheel(QWheelEvent)), mapController.data(), SLOT(onMouseWheel(QWheelEvent)));
 
     QTimer* timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateNorthArrow()));

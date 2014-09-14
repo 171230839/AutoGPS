@@ -11,6 +11,7 @@ Item{
     signal toLinesClicked()
     signal toPolygonClicked()
     signal clearClicked()
+    signal geometryGoBackClicked()
     property Panel panel
     property Stack stack
     id: worker
@@ -43,6 +44,7 @@ Item{
              toLinesClicked.connect(worker.toLinesClicked)
              toPolygonClicked.connect(worker.toPolygonClicked)
             clearClicked.connect(worker.clearClicked)
+             geometryGoBackClicked.connect(worker.geometryGoBackClicked)
          }
     }
 

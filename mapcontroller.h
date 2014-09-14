@@ -69,15 +69,15 @@ private:
     bool bSelectProject;
     QScopedPointer<EsriRuntimeQt::GraphicsLayer> projectLayer;
     QMap<QString, qint64> projectMap;
-    void readAndPaintXmlFile(QString fileName, QString projectName);
     QString projectUser;
     QScopedPointer<EsriRuntimeQt::GraphicsLayer> pathLayer;
-//    QList<EsriRuntimeQt::Line*> paintLineList;
-//    QList<EsriRuntimeQt::Line*> paintPathList;
     void readAndPaintPathXMLFile(QString);
     void paintCropland(const QList<EsriRuntimeQt::Point*>&);
     QString orientation;
     QStringList projectList;
+//        QScopedPointer<EsriRuntimeQt::GraphicsLayer> playerProjectLayer;
+       void readAndPaintXmlFile(QString file, QString projectName);
+       void paintProject(const QList<EsriRuntimeQt::Point*>&, QString);
 signals:
     void headingChanged(QVariant newHeading);
     void positionChanged(QVariant newPosition);
@@ -90,8 +90,6 @@ public slots:
     void onMapReady();
 
     void handleHomeClicked();
-    void handlePan(QString direction);
-    //    void handlePositionAvailable(QPointF pos, double orientation);
 
     void handleToggleShowMe(bool state);
     void handleToggleFollowMe(bool state);
@@ -111,7 +109,7 @@ public slots:
     void handleGetPathClicked();
     void handlePaintCropLandClicked();
     void handleUnSelectClicked();
-    void onMouseWheel(QWheelEvent);
+//    void onMouseWheel(QWheelEvent);
     void onPaintGeometry(const QList<QPointF*> &);
     void handleSelectStartPointClicked();
     void onPaintLineList(const QList<EsriRuntimeQt::Line*>&);
@@ -119,9 +117,12 @@ public slots:
 //    void onPaintCornerList(QList<EsriRuntimeQt::Line*>);
 
     void handleSaveProjectClicked();
-    void onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString);
+
     void handlePathSaveProjectClicked();
     void onGetCroplandsClicked();
+    void handleCroplandGoBackClicked();
+    void handleSelectProjectClicked(QString);
+    void handleGeometryGoBackClicked();
 };
 
 }

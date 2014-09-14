@@ -77,12 +77,10 @@ MapController::~MapController()
 void MapController::onMapReady()
 {
     isMapReady = true;
-    pointsLayer.reset(new EsriRuntimeQt::GraphicsLayer());
-    map->addLayer(*pointsLayer);
-    projectLayer.reset(new GraphicsLayer());
-    map->addLayer(*projectLayer);
-    pathLayer.reset(new GraphicsLayer());
-    map->addLayer(*pathLayer);
+
+
+    //    pathLayer.reset(new GraphicsLayer());
+    //    map->addLayer(*pathLayer);
 
     map->grid().setType(GridType::Mgrs);
     map->grid().setVisible(false);
@@ -91,6 +89,7 @@ void MapController::onMapReady()
     qDebug()<<"scale"<<map->scale();
     qDebug()<<"map reference"<<map->spatialReference().toJson();
     map->setScale(6010.79);
+
 }
 
 
@@ -123,82 +122,15 @@ void MapController::handleToggleFollowMe(bool state)
 
 void MapController::handleZoomIn()
 {
-    //    map->zoom(0.5);
     map->setScale(map->scale() / 2);
-    qDebug()<<"map  scaled zoomin"<<map->scale();
-    if (map->scale() < 100)
-    {
-        if (bTiledLayerVisible)
-        {
-            QStringList layerNames = map->layerNames();
-            if (layerNames.contains("tiledLayer"))
-            {
-                Layer layer = map->layer("tiledLayer");
-                layer.setVisible(false);
-            }
-            bTiledLayerVisible = false;
-        }
-    }
-
-
-    QMatrix matrix = mapGraphicsView->matrix();
-    qDebug()<<"m11 hbox scale"<<matrix.m11();
-    qDebug()<<"m21 vbox scale"<< matrix.m22();
-
 }
 
 void MapController::handleZoomOut()
 {
-    //    map->zoom(2);
     map->setScale(map->scale() *  2);
-    if (map->scale() >= 100)
-    {
-        if (!bTiledLayerVisible)
-        {
-            QStringList layerNames = map->layerNames();
-            if (layerNames.contains("tiledLayer"))
-            {
-                Layer layer = map->layer("tiledLayer");
-                layer.setVisible(true);
-            }
-            bTiledLayerVisible = true;
-        }
-    }
-    qDebug()<<"map  scaled zoomout"<<map->scale();
-    QMatrix matrix = mapGraphicsView->matrix();
-    qDebug()<<"m11 hbox scale"<<matrix.m11();
-    qDebug()<<"m21 vbox scale"<< matrix.m22();
 }
 
-void MapController::handlePan(QString direction)
-{
-    if (followOwnship)
-    {
-        followOwnship = false;
-        map->setRotation(0);
-    }
-    Envelope extent = map->extent();
 
-    double width = extent.width();
-    double height = extent.height();
-
-    double centerX = extent.centerX();
-    double centerY = extent.centerY();
-
-    const double PAN_INCREMENT = 0.25;
-
-    if (direction.compare("up") == 0)
-        centerY += height * PAN_INCREMENT;
-    else if (direction.compare("down") == 0)
-        centerY -= height * PAN_INCREMENT;
-    else if (direction.compare("left") == 0)
-        centerX -= width * PAN_INCREMENT;
-    else if (direction.compare("right") == 0)
-        centerX += width * PAN_INCREMENT;
-
-    Envelope newExtent(Point(centerX, centerY), width, height);
-    map->panTo(newExtent);
-}
 
 void MapController::handleResetMap()
 {
@@ -434,9 +366,9 @@ void MapController::onClearClicked()
 
 void MapController::handleSelectPointsClicked()
 {
-        qDeleteAll(croplandPointList);
-        croplandPointList.clear();
-        bSelectPoints = true;
+    qDeleteAll(croplandPointList);
+    croplandPointList.clear();
+    bSelectPoints = true;
 }
 
 void MapController::handlePaintCropLandClicked()
@@ -489,14 +421,26 @@ void MapController::handleGetPathClicked()
 
 
         Point* x = getXAxisPoint(croplandPointList, order);
-//        for (int i = 0; i < croplandPointList.size(); ++i)
-//        {
-//            if (i < order)
-//            {
-//                Point* point = croplandPointList.takeAt(i);
-//                croplandPointList.append(point);
-//            }
-//        }
+        foreach(Point* point, croplandPointList)
+        {
+            qDebug()<<" point -------"<<point->x() << point->y();
+        }
+        for (int i = 0; i < croplandPointList.size(); ++i)
+        {
+            //                Point* point = croplandPointList.at(i);
+            //                qDebug()<<" point22 --"<<point->x() << point->y();
+            if (i < order)
+            {
+                Point* point = croplandPointList.takeFirst();
+                qDebug()<<" take at  point" << point->x() << point->y();
+                croplandPointList.append(point);
+            }
+        }
+        foreach(Point* point, croplandPointList)
+        {
+            qDebug()<<" point -------"<<point->x() << point->y();
+        }
+
         MyCoordinate coor(startPoint.data(), x, carWidth, this->orientation);
         connect(&coor, SIGNAL(paintLineList(const QList<EsriRuntimeQt::Line*>&)), this, SLOT(onPaintLineList(const QList<EsriRuntimeQt::Line*>&)));
         connect(&coor, SIGNAL(paintPathList(const QList<EsriRuntimeQt::Line*>&)), this, SLOT(onPaintPathList(const QList<EsriRuntimeQt::Line*>&)));
@@ -578,48 +522,52 @@ void MapController::handleUnSelectClicked()
     startPoint->clear();
 }
 
-void MapController::onMouseWheel(QWheelEvent e)
-{
-    if (e.delta() > 0)
-    {
-        if (map->scale() <= 100)
-        {
-            if (bTiledLayerVisible)
-            {
-                QStringList layerNames = map->layerNames();
-                if (layerNames.contains("tiledLayer"))
-                {
-                    Layer layer = map->layer("tiledLayer");
-                    layer.setVisible(false);
-                }
-                bTiledLayerVisible = false;
-            }
-        }
-    }
-    else
-    {
-        if  (map->scale() >100)
-        {
-            if (!bTiledLayerVisible)
-            {
-                QStringList layerNames = map->layerNames();
-                if (layerNames.contains("tiledLayer"))
-                {
-                    Layer layer = map->layer("tiledLayer");
-                    layer.setVisible(true);
-                }
-                bTiledLayerVisible = true;
-            }
-        }
-    }
-}
+//void MapController::onMouseWheel(QWheelEvent e)
+//{
+//    if (e.delta() > 0)
+//    {
+//        if (map->scale() <= 100)
+//        {
+//            if (bTiledLayerVisible)
+//            {
+//                QStringList layerNames = map->layerNames();
+//                if (layerNames.contains("tiledLayer"))
+//                {
+//                    Layer layer = map->layer("tiledLayer");
+//                    layer.setVisible(false);
+//                }
+//                bTiledLayerVisible = false;
+//            }
+//        }
+//    }
+//    else
+//    {
+//        if  (map->scale() >100)
+//        {
+//            if (!bTiledLayerVisible)
+//            {
+//                QStringList layerNames = map->layerNames();
+//                if (layerNames.contains("tiledLayer"))
+//                {
+//                    Layer layer = map->layer("tiledLayer");
+//                    layer.setVisible(true);
+//                }
+//                bTiledLayerVisible = true;
+//            }
+//        }
+//    }
+//}
 
 void MapController::onPaintGeometry(const QList<QPointF*> &pointFList)
 {
     qDebug()<<"onPaintGeometry"<<pointFList.size();
     if (pointFList.size() == 0)
         return;
-    map->removeAll();
+    //    map->removeAll();
+    Layer layer = map->layer("tiledLayer");
+    layer.setVisible(false);
+    map->removeLayer(*projectLayer);
+//    map->removeLayer(*pointsLayer);
     map->grid().setVisible(true);
     paintLayer.reset(new GraphicsLayer());
     map->addLayer(*paintLayer);
@@ -878,6 +826,18 @@ void MapController::setSimpleVisible(bool state)
 void MapController::handleCreateProjectClicked()
 {
     qDebug()<<"handleCreateProjectClicked()";
+    pointsLayer.reset(new EsriRuntimeQt::GraphicsLayer());
+    map->addLayer(*pointsLayer);
+    if (pointList.size() > 0)
+    {
+        if (pointList.count(pointList.first()) > 1)
+        {
+            pointList.pop_front();
+        }
+    }
+    qDeleteAll(pointList);
+    pointList.clear();
+
     QString dirPath = QCoreApplication::applicationDirPath();
     QDir dir(dirPath);
     if (!dir.exists("Projects"))
@@ -933,11 +893,10 @@ void MapController::handleSaveProjectClicked()
 
 }
 
-void MapController::onPaintProject(const QList<Point*> &pointList, QString projectName, QString user)
+void MapController::paintProject(const QList<Point*> &pointList, QString projectName)
 {
     qDebug()<<"onPaintProject"<<pointList.size();
-    this->bSelectProject = true;
-    this->projectUser = user;
+
     QList<Point> tempList;
     foreach(Point * point, pointList)
     {
@@ -1029,6 +988,7 @@ void MapController::handlePathSaveProjectClicked()
     //    paintPathList.clear();
     file.write(array);
     file.close();
+
 
 }
 
@@ -1155,7 +1115,11 @@ void MapController::onGetCroplandsClicked()
     if (projectList.size()  < 1)
         return;
     qDebug()<<"onGetCroplandsCLicked"<<projectList.size();
-    map->removeAll();
+    //    map->removeAll();
+    Layer layer = map->layer("tiledLayer");
+    layer.setVisible(false);
+    map->removeLayer(*projectLayer);
+//    map->removeLayer(*pointsLayer);
     map->grid().setVisible(true);
     pathLayer.reset(new GraphicsLayer());
     map->addLayer(*pathLayer);
@@ -1169,6 +1133,96 @@ void MapController::onGetCroplandsClicked()
     this->bSelectProject = false;
 }
 
+void MapController::handleCroplandGoBackClicked()
+{
+    qDebug()<<"handleCroplandGoBackClicked";
+    Layer layer = map->layer("tiledLayer");
+    layer.setVisible(true);
+    map->removeLayer(*pathLayer);
+    map->removeLayer(*paintLayer);
+    map->removeLayer(*projectLayer);
+    map->grid().setVisible(false);
+     map->setScale(6010.79);
+}
+
+
+void MapController::handleSelectProjectClicked(QString user)
+{
+    qDebug()<<"onSelectProjectClicked()()";
+    this->bSelectProject = true;
+    this->projectUser = user;
+    projectLayer.reset(new GraphicsLayer());
+    map->addLayer(*projectLayer);
+    projectMap.clear();
+
+    QString dirPath = QCoreApplication::applicationDirPath();
+    QDir dir(dirPath);
+    if (!dir.exists("Projects"))
+    {
+        return;
+    }
+    QDir projectsDir(dirPath + "/Projects");
+    qDebug()<<"projectsDir"<<projectsDir.absolutePath();
+    QStringList dirList = projectsDir.entryList(QDir::NoDotAndDotDot | QDir::Dirs, QDir::Time);
+    foreach(QString dirName, dirList)
+    {
+        qDebug()<<"dirName"<<dirName;
+        QDir dir(projectsDir.absoluteFilePath(dirName));
+        if (!dir.exists("geometry.xml"))
+        {
+            continue;
+        }
+        else
+        {
+            readAndPaintXmlFile(dir.absoluteFilePath("geometry.xml"), dirName);
+        }
+    }
+
+
+}
+
+void MapController::readAndPaintXmlFile(QString fileName, QString projectName)
+{
+    qDebug()<<"fileName"<<fileName;
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        emit error(QVariant::fromValue(tr("Can't open xml file %1")
+                                       .arg(fileName)));
+        return;
+    }
+    QByteArray array = file.readAll();
+    QXmlStreamReader reader(array);
+    QList<Point*> pointList;
+    //    parseGeometryXML(reader, pointList);
+    while (!reader.atEnd() && !reader.hasError())
+    {
+        reader.readNext();
+        if (reader.isStartElement())
+        {
+            if (reader.name().compare("Point") == 0)
+            {
+                //                readLog( reader, pointFList,  timeList);
+                QXmlStreamAttributes attrs = reader.attributes();
+                double x = attrs.value("x").toString().toDouble();
+                double y = attrs.value("y").toString().toDouble();
+                //                qDebug()<<QString("readlog lat: %1 lon: %2").arg(dLat, 0, 'g', 11).arg(dLon, 0, 'g', 12);
+                Point *point = new Point(x, y);
+                pointList.append(point);
+            }
+        }
+    }
+   paintProject(pointList, projectName);
+
+    qDeleteAll(pointList);
+    file.close();
+}
+
+void MapController::handleGeometryGoBackClicked()
+{
+    map->removeLayer(*pointsLayer);
+
+}
 
 }
 

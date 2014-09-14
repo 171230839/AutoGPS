@@ -21,6 +21,7 @@ Item{
     signal selectStartPointClicked()
     signal getPathClicked()
      signal pathSaveProjectClicked()
+    signal croplandGoBackClicked()
     property Panel panel
     property Stack stack
 
@@ -86,6 +87,7 @@ Item{
             selectStartPointClicked.connect(record.selectStartPointClicked)
             getPathClicked.connect(record.getPathClicked)
             pathSaveProjectClicked.connect(record.pathSaveProjectClicked)
+            croplandGoBackClicked.connect(record.croplandGoBackClicked)
         }
     }
 //    RoutePanel

@@ -196,7 +196,7 @@ LayoutItem
             zoomInClicked.connect(window.zoomInClicked)
             zoomOutClicked.connect(window.zoomOutClicked)
             panClicked.connect(window.panClicked)
-            clicked.connect(mainMenu.clicked)
+//            clicked.connect(mainMenu.clicked)
         }
     }
     Image {

@@ -86,11 +86,13 @@ signals:
     void processProject(QString);
     void addCroplandPanel();
 //    void gotoPlayerPanel();
+    bool isXmlFileReady();
+    void addPlayerCroplandPanel();
 public slots:
     void onMapReady();
 
     void handleHomeClicked();
-
+    void handlePan(QString direction);
     void handleToggleShowMe(bool state);
     void handleToggleFollowMe(bool state);
     void handleZoomIn();
@@ -105,6 +107,7 @@ public slots:
     void handleToPolygonClicked();
     void onClearClicked();
     void mousePress(QMouseEvent);
+//    void handleSelectPointsClicked();
     void handleSelectPointsClicked();
     void handleGetPathClicked();
     void handlePaintCropLandClicked();

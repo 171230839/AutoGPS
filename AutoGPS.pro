@@ -125,4 +125,5 @@ OTHER_FILES += \
     Resources/qml/Panels/Record/RoutePanel.qml \
     myapp.ts \
     Resources/qml/PanelContainers/Player.qml\
-    Resources/qml/Panels/Player/PlayerPanel.qml
+    Resources/qml/Panels/Player/PlayerPanel.qml \
+    Resources/qml/Panels/Player/PlayerCroplandPanel.qml

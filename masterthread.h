@@ -151,6 +151,7 @@ public slots:
 //    void onPaintGeometryClicked();
 
     void onProcessProject(QString);
+    bool isXmlFileReady();
 };
 
 }

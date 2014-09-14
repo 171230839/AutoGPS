@@ -99,7 +99,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(overlayUI.data(), SIGNAL(homeClicked()), mapController.data(), SLOT(handleHomeClicked()));
     connect(overlayUI.data(), SIGNAL(zoomInClicked()), mapController.data(), SLOT(handleZoomIn()));
     connect(overlayUI.data(), SIGNAL(zoomOutClicked()), mapController.data(), SLOT(handleZoomOut()));
-//    connect(overlayUI.data(), SIGNAL(panClicked(QString)), mapController.data(), SLOT(handlePan(QString)));
+    connect(overlayUI.data(), SIGNAL(panClicked(QString)), mapController.data(), SLOT(handlePan(QString)));
     connect(mapController.data(), SIGNAL(positionChanged(QVariant)), overlayUI.data(), SLOT(updateLocation(QVariant)));
     connect(mapController.data(), SIGNAL(speedChanged(QVariant)), overlayUI.data(), SLOT(updateSpeed(QVariant)));
     connect(mapController.data(), SIGNAL(headingChanged(QVariant)), overlayUI.data(), SLOT(updateHeading(QVariant)));
@@ -117,7 +117,7 @@ AutoGPS::AutoGPS (QWidget *parent):
     connect(thread.data(), SIGNAL(paintGeometry(const QList<QPointF*>&)), mapController.data(), SLOT(onPaintGeometry(const QList<QPointF*>&)));
 //    connect(thread.data(), SIGNAL(paintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString)), mapController.data(), SLOT(onPaintProject(const QList<EsriRuntimeQt::Point*>&, QString, QString)));
     connect(mapController.data(), SIGNAL(processProject(QString)), thread.data(), SLOT(onProcessProject(QString)));
-
+    connect(mapController.data(), SIGNAL(isXmlFileReady()), thread.data(), SLOT(isXmlFileReady()));
 
     QObject * mainMenuUI = overlayUI->findChild<QObject*>("mainMenu");
     if (mainMenuUI)
@@ -180,8 +180,17 @@ AutoGPS::AutoGPS (QWidget *parent):
     QObject* player = overlayUI->findChild<QObject*>("player");
     if (player)
     {
-        connect(player, SIGNAL(userSelectProjectClicked(QString )), mapController.data(), SLOT(handleSelectProjectClicked(QString)));
+        connect(player, SIGNAL(playerSelectProjectClicked(QString )), mapController.data(), SLOT(handleSelectProjectClicked(QString)));
         connect(player, SIGNAL(getCroplandsClicked()), mapController.data(), SLOT(onGetCroplandsClicked()));
+        connect(mapController.data(), SIGNAL(addPlayerCroplandPanel()), player, SLOT(onAddPlayerCroplandPanel()));
+
+        connect(player, SIGNAL(selectPointsClicked()), mapController.data(), SLOT(handleSelectPointsClicked()));
+        connect(player, SIGNAL(paintCropLandClicked()), mapController.data(), SLOT(handlePaintCropLandClicked()));
+       connect(player, SIGNAL(unSelectClicked()), mapController.data(), SLOT(handleUnSelectClicked()));
+       connect(player, SIGNAL(selectStartPointClicked()), mapController.data(), SLOT(handleSelectStartPointClicked()));
+       connect(player, SIGNAL(getPathClicked()), mapController.data(), SLOT(handleGetPathClicked()));
+       connect(player, SIGNAL(pathSaveProjectClicked()), mapController.data(), SLOT(handlePathSaveProjectClicked()));
+       connect(player, SIGNAL(croplandGoBackClicked()), mapController.data(), SLOT(handleCroplandGoBackClicked()));
     }
 
     connect(map.data(), SIGNAL(mapReady()), mapController.data(), SLOT(onMapReady()));

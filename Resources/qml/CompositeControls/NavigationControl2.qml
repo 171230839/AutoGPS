@@ -11,12 +11,12 @@ Rectangle
   border.color: Qt.rgba(0, 0, 0, 0.5)
   color: Qt.rgba(0.5, 0.5, 0.5, 0.5)
   anchors.margins: 5
-  Component.onCompleted:
-  {
-    zoomInClicked.connect(navControl2.clicked())
-    zoomOutClicked.connect(navControl2.clicked())
-    panClicked.connect(navControl2.clicked())
-  }
+//  Component.onCompleted:
+//  {
+//    zoomInClicked.connect(navControl2.clicked())
+//    zoomOutClicked.connect(navControl2.clicked())
+//    panClicked.connect(navControl2.clicked())
+//  }
 
   signal zoomInClicked()
   signal zoomOutClicked()
@@ -36,7 +36,7 @@ Rectangle
     buttonActiveIcon: "../../icons/Nav-Controls-Plus-Pressed.png"
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    onItemClicked: navControl.zoomInClicked()
+    onItemClicked: navControl2.zoomInClicked()
   }
 
   PushButton
@@ -46,7 +46,7 @@ Rectangle
     buttonActiveIcon: "../../icons/Nav-Controls-North-Pressed.png"
     anchors.top: zoomIn.bottom
     anchors.horizontalCenter: parent.horizontalCenter
-    onItemClicked: navControl.panClicked("up")
+    onItemClicked: navControl2.panClicked("up")
   }
 
   PushButton
@@ -56,7 +56,7 @@ Rectangle
     buttonActiveIcon: "../../icons/Nav-Controls-West-Pressed.png"
     anchors.top: panUp.bottom
     anchors.left: parent.left
-    onItemClicked: navControl.panClicked("left")
+    onItemClicked: navControl2.panClicked("left")
   }
 
   PushButton
@@ -66,7 +66,7 @@ Rectangle
     buttonActiveIcon: "../../icons/Nav-Controls-East-Pressed.png"
     anchors.top: panUp.bottom
     anchors.right: parent.right
-    onItemClicked: navControl.panClicked("right")
+    onItemClicked: navControl2.panClicked("right")
   }
 
   PushButton
@@ -76,7 +76,7 @@ Rectangle
     buttonActiveIcon: "../../icons/Nav-Controls-South-Pressed.png"
     anchors.top: panLeft.bottom
     anchors.horizontalCenter: panUp.horizontalCenter
-    onItemClicked: navControl.panClicked("down")
+    onItemClicked: navControl2.panClicked("down")
   }
 
   PushButton
@@ -86,6 +86,6 @@ Rectangle
     buttonActiveIcon: "../../icons/Nav-Controls-Minus-Pressed.png"
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
-    onItemClicked: navControl.zoomOutClicked()
+    onItemClicked: navControl2.zoomOutClicked()
   }
 }

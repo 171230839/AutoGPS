@@ -77,10 +77,10 @@ MapController::~MapController()
 void MapController::onMapReady()
 {
     isMapReady = true;
+    pointsLayer.reset(new EsriRuntimeQt::GraphicsLayer());
+    map->addLayer(*pointsLayer);
 
-
-    //    pathLayer.reset(new GraphicsLayer());
-    //    map->addLayer(*pathLayer);
+    map->setScale(6000);
 
     map->grid().setType(GridType::Mgrs);
     map->grid().setVisible(false);
@@ -88,7 +88,7 @@ void MapController::onMapReady()
     qDebug()<<"maxScale"<<map->maxScale();
     qDebug()<<"scale"<<map->scale();
     qDebug()<<"map reference"<<map->spatialReference().toJson();
-    map->setScale(6010.79);
+
 
 }
 
@@ -130,7 +130,35 @@ void MapController::handleZoomOut()
     map->setScale(map->scale() *  2);
 }
 
+void MapController::handlePan(QString direction)
+{
+    if (followOwnship)
+    {
+        followOwnship = false;
+        map->setRotation(0);
+    }
+    Envelope extent = map->extent();
 
+    double width = extent.width();
+    double height = extent.height();
+
+    double centerX = extent.centerX();
+    double centerY = extent.centerY();
+
+    const double PAN_INCREMENT = 0.25;
+
+    if (direction.compare("up") == 0)
+        centerY += height * PAN_INCREMENT;
+    else if (direction.compare("down") == 0)
+        centerY -= height * PAN_INCREMENT;
+    else if (direction.compare("left") == 0)
+        centerX -= width * PAN_INCREMENT;
+    else if (direction.compare("right") == 0)
+        centerX += width * PAN_INCREMENT;
+
+    Envelope newExtent(Point(centerX, centerY), width, height);
+    map->panTo(newExtent);
+}
 
 void MapController::handleResetMap()
 {
@@ -320,7 +348,7 @@ void MapController::mousePress(QMouseEvent mouseEvent)
     if (bSelectPoints)
     {
         QList<qint64> hitGraphicIDs = paintLayer->graphicIds(mousePoint.x(), mousePoint.y(), 3);
-
+        qDebug()<<"bSelectPoints";
         foreach( qint64 id, hitGraphicIDs)
         {
             Graphic graphic = paintLayer->graphic(id);
@@ -366,22 +394,20 @@ void MapController::onClearClicked()
 
 void MapController::handleSelectPointsClicked()
 {
+    qDebug()<<"handle SelectPointsClicked";
     qDeleteAll(croplandPointList);
     croplandPointList.clear();
     bSelectPoints = true;
+    paintLayer->clearSelection();
 }
 
 void MapController::handlePaintCropLandClicked()
 {
+     qDebug()<<"handlePaintCroplandclicked"<<croplandPointList.size();
     if (croplandPointList.isEmpty())
         return;
     //    pointList.append(pointList.first());
     qDebug()<<"handlePaintCroplandclicked"<<croplandPointList.size();
-    paintCropland(this->croplandPointList);
-}
-
-void MapController::paintCropland(const QList<EsriRuntimeQt::Point*>& croplandPointList)
-{
     QList<Point> temp;
     foreach(Point* point, croplandPointList)
     {
@@ -393,6 +419,19 @@ void MapController::paintCropland(const QList<EsriRuntimeQt::Point*>& croplandPo
     pathLayer->addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor(0, 180, 0, 200))));
 
 }
+
+//void MapController::paintCropland(const QList<EsriRuntimeQt::Point*>& croplandPointList)
+//{
+//    QList<Point> temp;
+//    foreach(Point* point, croplandPointList)
+//    {
+//        temp.append(*point);
+//    }
+//    QList<QList<EsriRuntimeQt::Point> > tmpList;
+//    tmpList.append(temp);
+//    EsriRuntimeQt::Polygon polygon(tmpList);
+//    pathLayer->addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor(0, 180, 0, 200))));
+//}
 
 void MapController::handleGetPathClicked()
 {
@@ -567,7 +606,8 @@ void MapController::onPaintGeometry(const QList<QPointF*> &pointFList)
     Layer layer = map->layer("tiledLayer");
     layer.setVisible(false);
     map->removeLayer(*projectLayer);
-//    map->removeLayer(*pointsLayer);
+    this->bSelectProject = false;
+    //    map->removeLayer(*pointsLayer);
     map->grid().setVisible(true);
     paintLayer.reset(new GraphicsLayer());
     map->addLayer(*paintLayer);
@@ -1097,7 +1137,20 @@ void MapController::readAndPaintPathXMLFile(QString projectName)
     map->panTo(*croplandPointList.first());
     map->setScale(300);
 
-    this->paintCropland(croplandPointList);
+    //    this->paintCropland(croplandPointList);
+    QList<Point> temp;
+    foreach(Point* point, croplandPointList)
+    {
+        temp.append(*point);
+        SimpleMarkerSymbol smsSymbol(Qt::red, 5, SimpleMarkerSymbolStyle::Circle);
+        Graphic graphic(*point, smsSymbol);
+        paintLayer->addGraphic(graphic);
+    }
+    QList<QList<EsriRuntimeQt::Point> > tmpList;
+    tmpList.append(temp);
+    EsriRuntimeQt::Polygon polygon(tmpList);
+    paintLayer->addGraphic(EsriRuntimeQt::Graphic(polygon, EsriRuntimeQt::SimpleFillSymbol(QColor(0, 180, 0, 200))));
+
     //    this->onPaintLineList(paintLineList);
     //    this->onPaintPathList(paintPathList);
 
@@ -1116,13 +1169,17 @@ void MapController::onGetCroplandsClicked()
         return;
     qDebug()<<"onGetCroplandsCLicked"<<projectList.size();
     //    map->removeAll();
+    emit addPlayerCroplandPanel();
     Layer layer = map->layer("tiledLayer");
     layer.setVisible(false);
     map->removeLayer(*projectLayer);
-//    map->removeLayer(*pointsLayer);
+    this->bSelectProject = false;
+    //    map->removeLayer(*pointsLayer);
     map->grid().setVisible(true);
     pathLayer.reset(new GraphicsLayer());
     map->addLayer(*pathLayer);
+    paintLayer.reset(new GraphicsLayer());
+    map->addLayer(*paintLayer);
 
     foreach(QString pro, projectList)
     {
@@ -1139,16 +1196,28 @@ void MapController::handleCroplandGoBackClicked()
     Layer layer = map->layer("tiledLayer");
     layer.setVisible(true);
     map->removeLayer(*pathLayer);
+
     map->removeLayer(*paintLayer);
-    map->removeLayer(*projectLayer);
+    //    map->removeLayer(*projectLayer);
     map->grid().setVisible(false);
-     map->setScale(6010.79);
+    map->setScale(6010.79);
+    bSelectPoints = false;
+    bSelectStartPoint = false;
 }
 
 
 void MapController::handleSelectProjectClicked(QString user)
 {
     qDebug()<<"onSelectProjectClicked()()";
+    if (user == "worker")
+    {
+        bool ready = isXmlFileReady();
+        qDebug()<<" worker xml file ready"<<ready;
+        if (!ready)
+        {
+            return;
+        }
+    }
     this->bSelectProject = true;
     this->projectUser = user;
     projectLayer.reset(new GraphicsLayer());
@@ -1212,7 +1281,7 @@ void MapController::readAndPaintXmlFile(QString fileName, QString projectName)
             }
         }
     }
-   paintProject(pointList, projectName);
+    paintProject(pointList, projectName);
 
     qDeleteAll(pointList);
     file.close();
@@ -1221,7 +1290,7 @@ void MapController::readAndPaintXmlFile(QString fileName, QString projectName)
 void MapController::handleGeometryGoBackClicked()
 {
     map->removeLayer(*pointsLayer);
-
+    bPoints = false;
 }
 
 }
